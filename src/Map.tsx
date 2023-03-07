@@ -7,10 +7,7 @@ type MapProps = {
   longitude: number
 }
 
-export default function Map({
-  latitude,
-  longitude,
-}: MapProps): React.HTMLDivElement {
+export default function Map({ latitude, longitude }: MapProps) {
   const [kakaoMap, setKakaoMap] = useState<kakao.maps.Map | null>(null)
 
   const newMarker = (lat: number, lng: number): kakao.maps.Marker =>
@@ -20,7 +17,7 @@ export default function Map({
 
   const [markers, setMarkers] = useState<Array<kakao.maps.Marker>>([])
 
-  const container: React.MutableRefObject<kakao.maps.Map | undefined> = useRef()
+  const container: React.MutableRefObject<any> = useRef()
 
   useEffect(() => {
     const script = document.createElement("script")
