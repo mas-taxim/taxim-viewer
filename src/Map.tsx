@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState, useRef } from "react"
 
+import { loadScript } from "./utils"
+
 type MapProps = {
   latitude: number
   longitude: number
@@ -20,20 +22,22 @@ export default function Map({ latitude, longitude }: MapProps) {
   const container: React.MutableRefObject<any> = useRef()
 
   useEffect(() => {
-    const script = document.createElement("script")
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.REACT_APP_KAKAO_MAP_API_KEY}&libraries=services,clusterer&autoload=false`
-    document.head.appendChild(script)
-
-    script.onload = () => {
-      kakao.maps.load(() => {
-        const center = new kakao.maps.LatLng(latitude, longitude)
-        const options = {
-          center,
-          level: 3,
-        }
-        const map = new kakao.maps.Map(container.current, options)
-        setKakaoMap(map)
-      })
+    const script: HTMLScriptElement | null = loadScript({
+      src: `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.REACT_APP_KAKAO_MAP_API_KEY}&libraries=services,clusterer&autoload=false`,
+      location: "head",
+    })
+    if (script) {
+      script.onload = () => {
+        kakao.maps.load(() => {
+          const center = new kakao.maps.LatLng(latitude, longitude)
+          const options = {
+            center,
+            level: 3,
+          }
+          const map = new kakao.maps.Map(container.current, options)
+          setKakaoMap(map)
+        })
+      }
     }
   }, [container])
 
