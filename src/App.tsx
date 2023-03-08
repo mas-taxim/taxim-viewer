@@ -1,11 +1,11 @@
 import React from "react"
-import Map from "./Map"
+import Map from "./pages/Map"
 import "./App.css"
 
 function App() {
   return (
     <div className="App">
-      <Map latitude={37.52897} longitude={126.917101} />
+      <Map />
     </div>
   )
 }
