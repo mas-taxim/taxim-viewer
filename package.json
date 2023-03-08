@@ -48,6 +48,9 @@
     "prettier": "^2.8.4",
     "typescript": "^4.9.5"
   },
+  "optionalDependencies": {
+    "fsevents": "*"
+  },
   "resolutions": {
     "@types/react": "17.0.14",
     "@types/react-dom": "17.0.14"
