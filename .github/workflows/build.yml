@@ -18,7 +18,7 @@ jobs:
       CI: true
     strategy:
       matrix:
-        node-version: [14.x]
+        node-version: [16.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
@@ -31,7 +31,7 @@ jobs:
           cache: 'npm'
 
       - name: Install modules
-        run: npm ci
+        run: npm i
 
       - name: Run test codes
         run: npm run test
