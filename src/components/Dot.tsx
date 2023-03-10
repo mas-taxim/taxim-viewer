@@ -12,16 +12,22 @@ const paddleAnimation = keyframes`
   }
 `
 
+type CircleStyleProps = {
+  size: number
+  color: string
+  animate?: boolean
+}
+
 const Circle = styled.div`
   position: absolute;
-  width: ${({ size }) => `${size}em`};
-  height: ${({ size }) => `${size}em`};
-  left: ${({ size }) => `-${size / 2}em`};
-  top: ${({ size }) => `-${size / 2}em`};
-  background: dodgerblue;
+  width: ${({ size }: CircleStyleProps) => `${size}em`};
+  height: ${({ size }: CircleStyleProps) => `${size}em`};
+  left: ${({ size }: CircleStyleProps) => `-${size / 2}em`};
+  top: ${({ size }: CircleStyleProps) => `-${size / 2}em`};
+  background: ${({ color }: CircleStyleProps) => color};
   border-radius: 8rem;
 
-  ${(props) =>
+  ${(props: CircleStyleProps) =>
     props.animate &&
     css`
       animation: ${paddleAnimation} 1s ease-in-out infinite;
@@ -36,14 +42,15 @@ const Container = styled.div`
 `
 
 type DotProps = {
-  size?: number,
+  color?: string
+  size?: number
 }
 
-const Dot = ({ size = 2 }: DotProps) => {
+const Dot = ({ color = "dodgerblue", size = 2 }: DotProps) => {
   return (
     <Container>
-      <Circle size={size} animate={true} />
-      <Circle size={size} />
+      <Circle color={color} size={size} animate={true} />
+      <Circle color={color} size={size} />
     </Container>
   )
 }
