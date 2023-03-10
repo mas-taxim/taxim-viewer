@@ -6,6 +6,8 @@ import KakaoMap from "../components/KakaoMap"
 import Dot from "../components/Dot"
 import { CustomOverlayMap } from "react-kakao-maps-sdk"
 
+import "./Map.css"
+
 type MarkerPosition = {
   key: string | null
   color?: string
@@ -91,7 +93,7 @@ export default function Map() {
           .flat()
 
         setMarkerPositions([...vMarkers, ...tMarkers])
-      }, 33)
+      }, 300)
     })()
     return () => clearInterval(timer)
   }, [])
@@ -118,6 +120,11 @@ export default function Map() {
                 position={{
                   lat,
                   lng,
+                }}
+                ref={(ref: any) => {
+                  if (ref == null) return
+                  const parentNode = ref.cc.parentElement
+                  parentNode.className = "vehicle-marker"
                 }}
               >
                 <Dot color={color || "dodgerblue"} size={size / level} />
