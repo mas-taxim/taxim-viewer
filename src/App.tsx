@@ -1,13 +1,16 @@
 import React from "react"
 import Map from "./pages/Map"
-import ControlPanel from "./components/ControlPanel"
+import Aside from "./components/Aside"
+import Controls from "./pages/Controls"
 
 function App() {
   return (
     <div className="App">
       <Map />
       <div className="hud-overlay">
-        <ControlPanel />
+        <Aside>
+          <Controls />
+        </Aside>
       </div>
     </div>
   )

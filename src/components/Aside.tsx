@@ -43,12 +43,12 @@ const Container = (props: React.PropsWithChildren): React.ReactElement => {
   )
 }
 
-const ControlPanel = (): React.ReactElement => {
+const Aside = (props: React.PropsWithChildren): React.ReactElement => {
   return (
     <Container>
-      <h1>Controls</h1>
+      <>{props.children}</>
     </Container>
   )
 }
 
-export default ControlPanel
+export default Aside
