@@ -1,22 +1,40 @@
-import React, { useEffect, useState, useMemo } from "react"
+import React, { useEffect } from "react"
 
-import KakaoMapSDK, { Map, Loader } from "react-kakao-maps-sdk"
+import KakaoMapSDK, {
+  Map,
+  useInjectKakaoMapApi,
+  useMap,
+} from "react-kakao-maps-sdk"
+import styled from "styled-components"
 
-export default function MapLoader(
-  props: KakaoMapSDK.MapProps | React.CSSProperties
-) {
-  const [container, setContainer] = useState<React.ReactElement>()
+type MapProps = KakaoMapSDK.MapProps & {
+  style?: React.CSSProperties
+}
 
-  useEffect(() => {
-    const script: Loader = new Loader({
-      appkey: process.env.REACT_APP_KAKAO_MAP_API_KEY as string,
-      libraries: ["services", "clusterer"],
-      retries: 3,
-    })
-    script.load().then(() => {
-      setContainer(<Map {...(props as KakaoMapSDK.MapProps)} />)
-    })
-  }, [setContainer])
+const Dimmer = styled.div`
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: rgb(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+`
 
-  return <>{container}</>
+export default function MapLoader(props: MapProps): React.ReactElement {
+  const { loading, error } = useInjectKakaoMapApi({
+    appkey: process.env.REACT_APP_KAKAO_MAP_API_KEY as string,
+    libraries: ["services", "clusterer"],
+    retries: 3,
+  })
+  return (
+    <>
+      {loading || error ? (
+        <Dimmer />
+      ) : (
+        <Map {...(props as KakaoMapSDK.MapProps)} />
+      )}
+    </>
+  )
 }
