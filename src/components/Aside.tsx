@@ -7,7 +7,7 @@ const ContainerWrapper = styled.div`
   top: 0;
   left: 0;
   width: 100%;
-  max-width: 320px;
+  max-width: 400px;
   height: 100%;
   display: flex;
   align-items: center;
@@ -28,7 +28,7 @@ const ContainerStyled = styled.div`
   border-radius: 0;
   outline: 0;
   margin: 0;
-  padding: 1em;
+  padding: 1em 2em;
   box-sizing: border-box;
   box-shadow: 0 0 1em rgba(128, 128, 128, 0.5);
 `
