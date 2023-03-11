@@ -1,9 +1,8 @@
-/* global kakao */
-
 import React, { useEffect, useState } from "react"
 import KakaoMap from "../components/KakaoMap"
 
 import Dot from "../components/Dot"
+import LocalTaxiIcon from "@mui/icons-material/LocalTaxi"
 import { CustomOverlayMap, CustomOverlayMapProps } from "react-kakao-maps-sdk"
 
 import "./Map.css"
@@ -153,7 +152,15 @@ export default function Map() {
                   parentNode.className = "vehicle-marker"
                 }}
               >
-                <Dot color={color || "dodgerblue"} size={size / level} />
+                <Dot color={color || "dodgerblue"} size={size / level}>
+                  <LocalTaxiIcon
+                    style={{
+                      fill: "white",
+                      marginTop: "-1px",
+                      width: "75%",
+                    }}
+                  />
+                </Dot>
               </CustomOverlayMap>
             )
           )}
