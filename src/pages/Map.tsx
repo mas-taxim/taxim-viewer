@@ -8,6 +8,7 @@ import { CustomOverlayMap, CustomOverlayMapProps } from "react-kakao-maps-sdk"
 
 import "./Map.css"
 import { useControlState, ControlState } from "../providers/ControlProvider"
+import { useStatusState } from "../providers/StatusProvider"
 
 type MarkerPosition = {
   key: string | null
@@ -31,6 +32,7 @@ export default function Map() {
   )
   const [level, setLevel] = useState<number>(3)
   const [controls, setControls] = useControlState()
+  const [status, setStatus] = useStatusState()
 
   const { running, speed } = controls as ControlState
 
@@ -69,7 +71,8 @@ export default function Map() {
           finish()
           return
         }
-        const { vehicles, task } = logs[index]
+        const { time, vehicles, task } = logs[index]
+        setStatus((prev) => ({ ...prev, currentTime: time }))
         index += 1
 
         vehicles.forEach(({ name }: any) => {
