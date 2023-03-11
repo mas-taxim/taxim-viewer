@@ -1,3 +1,3 @@
 .vehicle-marker {
-  transition: top 200ms ease-in-out, left 200ms ease-in-out;
+  transition: top 150ms ease-in-out, left 150ms ease-in-out;
 }

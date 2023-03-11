@@ -8,6 +8,7 @@ import Stack from "@mui/joy/Stack"
 import KeyboardArrowRight from "@mui/icons-material/KeyboardArrowRight"
 
 import styled from "styled-components"
+import { useControlState } from "../providers/ControlProvider"
 
 const Card = styled.div`
   border: 1px solid #cfcfcf;
@@ -24,24 +25,25 @@ const Card = styled.div`
 
 const marks = [
   {
-    value: 60,
+    value: 1.0,
     label: "x1.0",
   },
   {
-    value: 60 * 2,
+    value: 2.0,
     label: "x2.0",
   },
   {
-    value: 60 * 4,
+    value: 4.0,
     label: "x4.0",
   },
   {
-    value: 60 * 8,
+    value: 8.0,
     label: "x8.0",
   },
 ]
 
 const Controls = (): React.ReactElement => {
+  const [controls, setControls] = useControlState()
   return (
     <>
       <Typography level="h2">Controls</Typography>
@@ -55,17 +57,37 @@ const Controls = (): React.ReactElement => {
           <Slider
             color="primary"
             aria-label="Time Speed"
-            defaultValue={60}
-            min={60}
-            max={60 * 8}
+            defaultValue={1.0}
+            min={1.0}
+            max={8.0}
+            step={0.5}
             disabled={false}
             marks={marks}
             size="lg"
             valueLabelDisplay="off"
             variant="solid"
+            onChangeCommitted={(
+              event: React.SyntheticEvent | Event,
+              value: number | number[]
+            ) => {
+              console.log("new value", value)
+              setControls((prev: ControlState) => ({
+                ...prev,
+                speed: value as number,
+              }))
+            }}
           />
         </Card>
-        <Button variant="soft" color="primary">
+        <Button
+          variant="soft"
+          color="primary"
+          onClick={() => {
+            setControls((prev: ControlState) => ({
+              ...prev,
+              running: true,
+            }))
+          }}
+        >
           Run
           <KeyboardArrowRight
             style={{

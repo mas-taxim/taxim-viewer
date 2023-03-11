@@ -4,9 +4,10 @@ import React, { useEffect, useState } from "react"
 import KakaoMap from "../components/KakaoMap"
 
 import Dot from "../components/Dot"
-import { CustomOverlayMap } from "react-kakao-maps-sdk"
+import { CustomOverlayMap, CustomOverlayMapProps } from "react-kakao-maps-sdk"
 
 import "./Map.css"
+import { useControlState, ControlState } from "../providers/ControlProvider"
 
 type MarkerPosition = {
   key: string | null
@@ -29,8 +30,21 @@ export default function Map() {
     []
   )
   const [level, setLevel] = useState<number>(3)
+  const [controls, setControls] = useControlState()
+
+  const { running, speed } = controls as ControlState
 
   useEffect(() => {
+    console.log(controls)
+
+    // 1 frame contains 60 secs
+    const DEFAULT_TIMESTEP = 60 * 1000
+    // 1 frame / 1000 ms
+    const interval = DEFAULT_TIMESTEP / 60 / (speed || 1.0)
+    console.log("info", interval, running, speed)
+
+    if (!running) return
+
     let timer: any = null
     ;(async () => {
       // dummy test file
@@ -93,10 +107,10 @@ export default function Map() {
           .flat()
 
         setMarkerPositions([...vMarkers, ...tMarkers])
-      }, 300)
+      }, interval)
     })()
     return () => clearInterval(timer)
-  }, [])
+  }, [running])
 
   return (
     <>
