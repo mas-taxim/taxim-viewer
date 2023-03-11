@@ -45,6 +45,10 @@ export default function Map() {
 
     if (!running) return
 
+    const finish = () => {
+      setControls((prev) => ({ ...prev, running: false }))
+    }
+
     let timer: any = null
     ;(async () => {
       // dummy test file
@@ -62,6 +66,7 @@ export default function Map() {
 
       timer = setInterval(() => {
         if (index >= logs.length) {
+          finish()
           return
         }
         const { vehicles, task } = logs[index]
@@ -109,7 +114,10 @@ export default function Map() {
         setMarkerPositions([...vMarkers, ...tMarkers])
       }, interval)
     })()
-    return () => clearInterval(timer)
+    return () => {
+      clearInterval(timer)
+      finish()
+    }
   }, [running])
 
   return (

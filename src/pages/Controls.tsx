@@ -44,6 +44,8 @@ const marks = [
 
 const Controls = (): React.ReactElement => {
   const [controls, setControls] = useControlState()
+  const { running } = controls
+
   return (
     <>
       <Typography level="h2">Controls</Typography>
@@ -81,6 +83,7 @@ const Controls = (): React.ReactElement => {
         <Button
           variant="soft"
           color="primary"
+          loading={running}
           onClick={() => {
             setControls((prev: ControlState) => ({
               ...prev,
