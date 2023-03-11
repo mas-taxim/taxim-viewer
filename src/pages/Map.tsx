@@ -1,13 +1,22 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useCallback } from "react"
 import KakaoMap from "../components/KakaoMap"
 
 import Dot from "../components/Dot"
 import LocalTaxiIcon from "@mui/icons-material/LocalTaxi"
+import HailIcon from "@mui/icons-material/Hail"
+import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown"
 import { CustomOverlayMap, CustomOverlayMapProps } from "react-kakao-maps-sdk"
 
 import "./Map.css"
 import { useControlState, ControlState } from "../providers/ControlProvider"
 import { useStatusState } from "../providers/StatusProvider"
+
+const MarkerType = {
+  NONE: -1,
+  VEHICLE: 0,
+  PERSON_PICK: 1,
+  PERSON_DROP: 2,
+}
 
 type MarkerPosition = {
   key: string | null
@@ -15,6 +24,7 @@ type MarkerPosition = {
   size: number
   lat: number
   lng: number
+  type: number
 }
 
 interface ColorName {
@@ -89,9 +99,10 @@ export default function Map() {
         const vMarkers = vehicles.map(({ name, lat, lng }: any) => ({
           key: name,
           color: colors[name],
-          size: 6,
+          size: 5,
           lat,
           lng,
+          type: MarkerType.VEHICLE,
         }))
 
         const tMarkers = task
@@ -99,16 +110,18 @@ export default function Map() {
             {
               key: `task-${id}-pick`,
               color: colors[`task-${id}`],
-              size: 3,
+              size: 4,
               lat: pick_lat,
               lng: pick_lng,
+              type: MarkerType.PERSON_PICK,
             },
             {
               key: `task-${id}-drop`,
               color: colors[`task-${id}`],
-              size: 3,
+              size: 4,
               lat: drop_lat,
               lng: drop_lng,
+              type: MarkerType.PERSON_DROP,
             },
           ])
           .flat()
@@ -121,6 +134,23 @@ export default function Map() {
       finish()
     }
   }, [running])
+
+  const displayIcon = useCallback((iconType: number) => {
+    const iconStyle = {
+      fill: "white",
+      marginTop: "-1px",
+      width: "75%",
+    }
+    if (iconType == MarkerType.NONE) {
+      return <></>
+    } else if (iconType == MarkerType.VEHICLE) {
+      return <LocalTaxiIcon style={iconStyle} />
+    } else if (iconType == MarkerType.PERSON_PICK) {
+      return <HailIcon style={iconStyle} />
+    } else if (iconType == MarkerType.PERSON_DROP) {
+      return <KeyboardDoubleArrowDownIcon style={iconStyle} />
+    }
+  }, [])
 
   return (
     <>
@@ -139,7 +169,7 @@ export default function Map() {
       >
         <>
           {markerPositions.map(
-            ({ key, color, size, lat, lng }: MarkerPosition) => (
+            ({ key, color, size, lat, lng, type }: MarkerPosition) => (
               <CustomOverlayMap
                 key={key}
                 position={{
@@ -153,13 +183,7 @@ export default function Map() {
                 }}
               >
                 <Dot color={color || "dodgerblue"} size={size / level}>
-                  <LocalTaxiIcon
-                    style={{
-                      fill: "white",
-                      marginTop: "-1px",
-                      width: "75%",
-                    }}
-                  />
+                  {displayIcon(type)}
                 </Dot>
               </CustomOverlayMap>
             )
