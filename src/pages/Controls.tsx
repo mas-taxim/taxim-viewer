@@ -8,7 +8,7 @@ import Stack from "@mui/joy/Stack"
 import KeyboardArrowRight from "@mui/icons-material/KeyboardArrowRight"
 
 import styled from "styled-components"
-import { useControlState } from "../providers/ControlProvider"
+import { useControlState, ControlState } from "../providers/ControlProvider"
 
 const Card = styled.div`
   border: 1px solid #cfcfcf;
@@ -44,7 +44,7 @@ const marks = [
 
 const Controls = (): React.ReactElement => {
   const [controls, setControls] = useControlState()
-  const { running } = controls
+  const { running } = controls as ControlState
 
   return (
     <>

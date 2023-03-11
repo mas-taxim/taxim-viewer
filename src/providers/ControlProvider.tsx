@@ -2,7 +2,7 @@ import React, { createContext, useState, useContext } from "react"
 
 export interface ContextState<T> {
   state: T
-  setState: React.Dispatch<T>
+  setState: React.Dispatch<React.SetStateAction<ControlState>>
 }
 
 export interface ControlState {
@@ -33,11 +33,17 @@ export const ControlProvider = (props: any) => {
   )
 }
 
-export const useControlState = () => {
+export const useControlState = (): [
+  ControlState,
+  React.Dispatch<React.SetStateAction<ControlState>>
+] => {
   const ctx: ContextState<ControlState> | undefined = useContext(Context)
   if (ctx === undefined) {
     throw new Error("useControlState should be used within ControlProvider")
   }
   const { state, setState } = ctx
-  return [state, setState]
+  return [
+    state as ControlState,
+    setState as React.Dispatch<React.SetStateAction<ControlState>>,
+  ]
 }
