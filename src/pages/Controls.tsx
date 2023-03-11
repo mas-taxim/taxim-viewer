@@ -65,6 +65,10 @@ const Controls = (): React.ReactElement => {
                 speed: value as number,
               }))
             }}
+            style={{
+              width: "calc(100% - 0.5rem)",
+              marginLeft: "0.5rem",
+            }}
           />
         </Card>
         <Button
