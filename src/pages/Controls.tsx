@@ -7,21 +7,8 @@ import Stack from "@mui/joy/Stack"
 
 import KeyboardArrowRight from "@mui/icons-material/KeyboardArrowRight"
 
-import styled from "styled-components"
+import Card from "../components/AsideCard"
 import { useControlState, ControlState } from "../providers/ControlProvider"
-
-const Card = styled.div`
-  border: 1px solid #cfcfcf;
-  border-radius: 0.33em;
-  padding: 1rem 2rem;
-  margin-top: 1rem;
-  box-sizing: border-box;
-
-  .header {
-    font-weight: bold;
-    margin: 0px -10px;
-  }
-`
 
 const marks = [
   {
