@@ -1,8 +1,8 @@
 import React from "react"
-import Map from "./pages/Map"
-import Aside from "./components/Aside"
-import Controls from "./pages/Controls"
-import { ControlProvider } from "./providers/ControlProvider"
+import Map from "./Map"
+import Aside from "../components/Aside"
+import Controls from "./Controls"
+import { ControlProvider } from "../providers/ControlProvider"
 
 function App() {
   return (
