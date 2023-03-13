@@ -1,11 +1,13 @@
-import React from "react"
+import React, { useEffect, useState } from "react"
 
 import { Typography, Slider, Button, Stack } from "@mui/joy"
 
 import KeyboardArrowRight from "@mui/icons-material/KeyboardArrowRight"
+import UploadIcon from "@mui/icons-material/Upload"
 
 import Card from "../../components/AsideCard"
 import { useControlState, ControlState } from "../../providers/ControlProvider"
+import { useStatusState, StatusState } from "../../providers/StatusProvider"
 
 const marks = [
   {
@@ -28,7 +30,15 @@ const marks = [
 
 const Controls = (): React.ReactElement => {
   const [controls, setControls] = useControlState()
+  const [status, setStatus] = useStatusState()
+  const [ready, setReady] = useState<boolean>(false)
+
   const { running } = controls as ControlState
+
+  useEffect(() => {
+    const { logs } = status as StatusState
+    setReady(logs && logs.length > 0)
+  }, [status])
 
   return (
     <>
@@ -67,10 +77,55 @@ const Controls = (): React.ReactElement => {
             }}
           />
         </Card>
+        <label
+          htmlFor="upload-log"
+          style={{
+            width: "100%",
+          }}
+        >
+          <input
+            style={{ display: "none" }}
+            id="upload-log"
+            name="upload-log"
+            type="file"
+            accept=".json,application/json"
+            onChange={(evt) => {
+              const files = evt.target.files
+              if (!files || files.length < 1) {
+                return
+              }
+              const file = files[0]
+              const reader: FileReader = new FileReader()
+              reader.addEventListener("load", (event: any) => {
+                const result = event.target.result
+                try {
+                  const { logs } = JSON.parse(result)
+                  setStatus((prev) => ({ ...prev, logs }))
+                } catch {
+                  window.alert("Wrong JSON file format")
+                }
+              })
+              reader.readAsText(file)
+            }}
+          />
+          <Button
+            color="primary"
+            variant="soft"
+            component="div"
+            sx={{
+              width: "100%",
+              boxSizing: "border-box",
+            }}
+          >
+            {/* Upload */}
+            <UploadIcon />
+          </Button>
+        </label>
         <Button
           variant="soft"
           color="success"
           loading={running}
+          disabled={!ready}
           onClick={() => {
             setControls((prev: ControlState) => ({
               ...prev,

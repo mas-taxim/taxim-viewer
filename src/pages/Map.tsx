@@ -5,11 +5,11 @@ import Dot from "../components/Dot"
 import LocalTaxiIcon from "@mui/icons-material/LocalTaxi"
 import HailIcon from "@mui/icons-material/Hail"
 import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown"
-import { CustomOverlayMap, CustomOverlayMapProps } from "react-kakao-maps-sdk"
+import { CustomOverlayMap } from "react-kakao-maps-sdk"
 
 import "./Map.css"
 import { useControlState, ControlState } from "../providers/ControlProvider"
-import { useStatusState } from "../providers/StatusProvider"
+import { useStatusState, StatusState } from "../providers/StatusProvider"
 
 const MarkerType = {
   NONE: -1,
@@ -44,6 +44,7 @@ export default function Map() {
   const [status, setStatus] = useStatusState()
 
   const { running, speed } = controls as ControlState
+  const { logs } = status as StatusState
 
   useEffect(() => {
     console.log(controls)
@@ -60,43 +61,40 @@ export default function Map() {
       setControls((prev) => ({ ...prev, running: false }))
     }
 
+    const logsOnPlay: Array<any> = [...logs]
+
     let timer: any = null
     ;(async () => {
-      // dummy test file
-      const { logs } = await fetch(
-        "https://api.github.com/gists/43807f8eee7f54d19f167130234fdc15"
-      )
-        .then((r) => r.json())
-        .then(({ files }) => files["20230308005358.min.json"])
-        .then(({ content }) => JSON.parse(content))
-
-      if (!logs) return
+      if (!logsOnPlay) return
 
       let index = 0
       const colors: ColorName = {}
 
       timer = setInterval(() => {
-        if (index >= logs.length) {
+        if (index >= logsOnPlay.length) {
           finish()
           return
         }
-        const { time, vehicles, task } = logs[index]
+        const { time, vehicles, tasks } = logsOnPlay[index]
         setStatus((prev) => ({ ...prev, currentTime: time }))
         index += 1
 
-        vehicles.forEach(({ name }: any) => {
+        const _vehicles = Array.from(vehicles || [])
+        const _tasks = Array.from(tasks || [])
+
+        _vehicles.forEach(({ name }: any) => {
           if (!(name in colors)) {
             colors[name] = randomColor()
           }
         })
-        task.forEach(({ id }: any) => {
+        _tasks.forEach(({ id }: any) => {
           const name = `task-${id}`
           if (!(name in colors)) {
             colors[name] = randomColor()
           }
         })
 
-        const vMarkers = vehicles.map(({ name, lat, lng }: any) => ({
+        const vMarkers = _vehicles.map(({ name, lat, lng }: any) => ({
           key: name,
           color: colors[name],
           size: 5,
@@ -105,7 +103,7 @@ export default function Map() {
           type: MarkerType.VEHICLE,
         }))
 
-        const tMarkers = task
+        const tMarkers = _tasks
           .map(({ id, pick_lat, pick_lng, drop_lat, drop_lng }: any) => [
             {
               key: `task-${id}-pick`,

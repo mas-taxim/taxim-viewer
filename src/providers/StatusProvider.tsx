@@ -7,10 +7,12 @@ export interface ContextState<T> {
 
 export interface StatusState {
   currentTime: number | null
+  logs: Array<any>
 }
 
 const initialState: StatusState = {
-  currentTime: null
+  currentTime: null,
+  logs: [],
 }
 
 const Context: any = createContext<ContextState<StatusState> | undefined>(
