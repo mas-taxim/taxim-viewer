@@ -1,14 +1,11 @@
 import React from "react"
 
-import Typography from "@mui/joy/Typography"
-import Slider from "@mui/joy/Slider"
-import Button from "@mui/joy/Button"
-import Stack from "@mui/joy/Stack"
+import { Typography, Slider, Button, Stack } from "@mui/joy"
 
 import KeyboardArrowRight from "@mui/icons-material/KeyboardArrowRight"
 
-import Card from "../components/AsideCard"
-import { useControlState, ControlState } from "../providers/ControlProvider"
+import Card from "../../components/AsideCard"
+import { useControlState, ControlState } from "../../providers/ControlProvider"
 
 const marks = [
   {
@@ -35,7 +32,6 @@ const Controls = (): React.ReactElement => {
 
   return (
     <>
-      <Typography level="h2">Controls</Typography>
       <Stack spacing={2}>
         <Card
           style={{
@@ -73,7 +69,7 @@ const Controls = (): React.ReactElement => {
         </Card>
         <Button
           variant="soft"
-          color="primary"
+          color="success"
           loading={running}
           onClick={() => {
             setControls((prev: ControlState) => ({

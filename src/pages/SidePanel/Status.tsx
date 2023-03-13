@@ -1,9 +1,10 @@
 import React, { useCallback } from "react"
 
 import Stack from "@mui/joy/Stack"
-import Card from "../components/AsideCard"
-import { useStatusState, StatusState } from "../providers/StatusProvider"
 import Typography from "@mui/joy/Typography"
+
+import Card from "../../components/AsideCard"
+import { useStatusState, StatusState } from "../../providers/StatusProvider"
 
 const dateToFormatString = (date: Date): string => {
   const options = {
