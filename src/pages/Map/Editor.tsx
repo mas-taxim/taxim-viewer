@@ -34,10 +34,11 @@ const Editor = (): React.ReactElement => {
       }
       const lat = loc.getLat()
       const lng = loc.getLng()
-      setNodes((prev) => [
-        ...prev,
-        { key: `node-${prev.length}`, lat, lng } as NodeType,
-      ])
+      setNodes((prev) => {
+        const node = { key: `node-${prev.length}`, lat, lng } as NodeType
+        console.log("add node", node)
+        return [...prev, node]
+      })
     },
     [editMode]
   )
