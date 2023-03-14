@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react"
 import Point from "../../components/Point"
+
 import { CustomOverlayMap, useMap } from "react-kakao-maps-sdk"
 
 type NodeType = {
@@ -47,7 +48,12 @@ const Editor = (): React.ReactElement => {
               lng,
             }}
           >
-            <Point size={6 / level} />
+            <Point
+              size={6 / level}
+              onClick={(evt) => {
+                console.log(evt)
+              }}
+            />
           </CustomOverlayMap>
         )
       )}

@@ -37,12 +37,13 @@ const Container = styled.div`
 type PointProps = {
   size?: number
   children?: React.ReactNode | React.ReactNode[]
+  onClick?: React.MouseEventHandler<any>
 }
 
-const Point = ({ size = 2, children }: PointProps) => {
+const Point = ({ size = 2, children, onClick }: PointProps) => {
   return (
     <Container>
-      <Circle size={size}>
+      <Circle size={size} onClick={onClick}>
         <div className="icon">{children}</div>
       </Circle>
     </Container>
