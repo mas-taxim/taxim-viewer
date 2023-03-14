@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 
 import { TabPanel, Tabs, TabList } from "@mui/joy"
 import Tab, { tabClasses } from "@mui/joy/Tab"
@@ -12,6 +12,13 @@ import { useControlState, ControlState } from "../../providers/ControlProvider"
 
 const SidePanel = (): React.ReactElement => {
   const [controls, setControls] = useControlState()
+  const [tabIndex, setTabIndex] = useState<number>(0)
+
+  useEffect(() => {
+    const { mode } = controls as ControlState
+    setTabIndex(mode === "view" ? 0 : 1)
+  }, [controls])
+
   return (
     <>
       <Tabs
@@ -39,7 +46,8 @@ const SidePanel = (): React.ReactElement => {
             setControls((prev: ControlState) => ({ ...prev, mode: "edit" }))
           }
         }}
-        defaultValue={controls.mode == "view" ? 0 : 1}
+        value={tabIndex}
+        defaultValue={0}
       >
         <TabList color="primary">
           <Tab>
