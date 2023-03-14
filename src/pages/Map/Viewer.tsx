@@ -37,7 +37,7 @@ const Viewer = (): React.ReactElement => {
   )
   const [controls, setControls] = useControlState()
   const [status, setStatus] = useStatusState()
-  const [level, setLevel] = useState<number>()
+  const [level, setLevel] = useState<number>(1)
 
   const map = useMap()
 

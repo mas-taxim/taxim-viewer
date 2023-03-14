@@ -1,23 +1,56 @@
-import React from "react"
-import Dot from "../../components/Dot"
+/* global kakao */
+
+import React, { useEffect, useState } from "react"
+import Point from "../../components/Point"
 import { CustomOverlayMap, useMap } from "react-kakao-maps-sdk"
 
+type NodeType = {
+  key: string
+  lat: number
+  lng: number
+}
+
 const Editor = (): React.ReactElement => {
+  const map: kakao.maps.Map = useMap()
+  const [nodes, setNodes] = useState<Array<NodeType>>([])
+  const [level, setLevel] = useState<number>(1)
+
+  useEffect(() => {
+    setLevel(map.getLevel())
+  }, [map])
+
+  useEffect(() => {
+    map.setCursor("default")
+    const onClick = ({ latLng: loc }: any) => {
+      const lat = loc.getLat()
+      const lng = loc.getLng()
+      setNodes((prev) => [
+        ...prev,
+        { key: `node-${prev.length}`, lat, lng } as NodeType,
+      ])
+    }
+    kakao.maps.event.addListener(map, "click", onClick)
+    return () => {
+      map.setCursor("")
+      kakao.maps.event.removeListener(map, "click", onClick)
+    }
+  }, [map])
+
   return (
     <>
-      <CustomOverlayMap
-        position={{
-          lat: 37.52897,
-          lng: 126.917101,
-        }}
-        ref={(ref: any) => {
-          if (ref == null) return
-          const parentNode = ref.cc.parentElement
-          parentNode.className = "vehicle-marker"
-        }}
-      >
-        <Dot color={"dodgerblue"} size={3}></Dot>
-      </CustomOverlayMap>
+      {nodes.map(
+        ({ key, lat, lng }: NodeType): React.ReactElement => (
+          <CustomOverlayMap
+            key={key}
+            position={{
+              lat,
+              lng,
+            }}
+          >
+            <Point size={6 / level} />
+          </CustomOverlayMap>
+        )
+      )}
     </>
   )
 }
