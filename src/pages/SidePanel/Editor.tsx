@@ -1,4 +1,4 @@
-import React, { useMemo } from "react"
+import React, { useMemo, useState, useEffect } from "react"
 
 import { Stack, RadioGroup, Sheet, Typography } from "@mui/joy"
 import Radio, { radioClasses } from "@mui/joy/Radio"
@@ -9,6 +9,7 @@ import { useControlState, ControlState } from "../../providers/ControlProvider"
 
 const Editor = (): React.ReactElement => {
   const [controls, setControls] = useControlState()
+  const [selected, setSelected] = useState<string>("add-point")
 
   const radioButtons = useMemo(
     () => [
@@ -32,6 +33,12 @@ const Editor = (): React.ReactElement => {
     [setControls]
   )
 
+  useEffect(() => {
+    setSelected(
+      (controls as ControlState).editMode === "add" ? "add-point" : "link-point"
+    )
+  }, [controls])
+
   return (
     <>
       <div style={{ marginLeft: "-16px", marginRight: "-16px" }}>
@@ -39,7 +46,7 @@ const Editor = (): React.ReactElement => {
           <FormControl>
             <RadioGroup
               aria-label="platform"
-              defaultValue={radioButtons[0].key}
+              value={selected}
               overlay
               name="platform"
               orientation="horizontal"
