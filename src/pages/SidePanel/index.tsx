@@ -8,8 +8,10 @@ import LocalTaxiIcon from "@mui/icons-material/LocalTaxi"
 import Controls from "./Controls"
 import Status from "./Status"
 import Editor from "./Editor"
+import { useControlState, ControlState } from "../../providers/ControlProvider"
 
 const SidePanel = (): React.ReactElement => {
+  const [controls, setControls] = useControlState()
   return (
     <>
       <Tabs
@@ -32,11 +34,12 @@ const SidePanel = (): React.ReactElement => {
         }}
         onChange={(event, value) => {
           if (value === 0) {
-            console.log("Viewer")
+            setControls((prev: ControlState) => ({ ...prev, mode: "view" }))
           } else {
-            console.log("Editor")
+            setControls((prev: ControlState) => ({ ...prev, mode: "edit" }))
           }
         }}
+        defaultValue={controls.mode == "view" ? 0 : 1}
       >
         <TabList color="primary">
           <Tab>

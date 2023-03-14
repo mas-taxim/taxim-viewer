@@ -6,11 +6,13 @@ export interface ContextState<T> {
 }
 
 export interface ControlState {
+  mode: "view" | "edit"
   speed?: number
   running?: boolean
 }
 
 const initialState: ControlState = {
+  mode: "view",
   speed: 1.0,
   running: false,
 }
@@ -22,9 +24,9 @@ const Context: any = createContext<ContextState<ControlState> | undefined>(
 export const ControlProvider = (props: any) => {
   const [state, setState] = useState<ControlState>(initialState)
 
-  const setContext = (state: ControlState) => {
-    setState((prevState: ControlState) => ({ ...prevState, ...state }))
-  }
+  // const setContext = (state: ControlState) => {
+  //   setState((prevState: ControlState) => ({ ...prevState, ...state }))
+  // }
 
   return (
     <Context.Provider value={{ state: { ...state }, setState }}>

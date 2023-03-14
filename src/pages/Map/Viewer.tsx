@@ -1,15 +1,13 @@
 import React, { useEffect, useState, useCallback } from "react"
-import KakaoMap from "../components/KakaoMap"
 
-import Dot from "../components/Dot"
+import Dot from "../../components/Dot"
 import LocalTaxiIcon from "@mui/icons-material/LocalTaxi"
 import HailIcon from "@mui/icons-material/Hail"
 import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown"
-import { CustomOverlayMap } from "react-kakao-maps-sdk"
+import { CustomOverlayMap, useMap } from "react-kakao-maps-sdk"
 
-import "./Map.css"
-import { useControlState, ControlState } from "../providers/ControlProvider"
-import { useStatusState, StatusState } from "../providers/StatusProvider"
+import { useControlState, ControlState } from "../../providers/ControlProvider"
+import { useStatusState, StatusState } from "../../providers/StatusProvider"
 
 const MarkerType = {
   NONE: -1,
@@ -33,15 +31,19 @@ interface ColorName {
 
 const randomColor = () => "#" + Math.random().toString(16).slice(-6)
 
-export default function Map() {
-  const latitude = 37.52897
-  const longitude = 126.917101
+const Viewer = (): React.ReactElement => {
   const [markerPositions, setMarkerPositions] = useState<Array<MarkerPosition>>(
     []
   )
-  const [level, setLevel] = useState<number>(3)
   const [controls, setControls] = useControlState()
   const [status, setStatus] = useStatusState()
+  const [level, setLevel] = useState<number>()
+
+  const map = useMap()
+
+  useEffect(() => {
+    setLevel(map.getLevel())
+  }, [map])
 
   const { running, speed } = controls as ControlState
   const { logs } = status as StatusState
@@ -152,42 +154,28 @@ export default function Map() {
 
   return (
     <>
-      <KakaoMap
-        center={{
-          lat: latitude,
-          lng: longitude,
-        }}
-        level={level}
-        onZoomChanged={(map) => setLevel(map.getLevel())}
-        style={{
-          width: "100%",
-          height: "100vh",
-          zIndex: 0,
-        }}
-      >
-        <>
-          {markerPositions.map(
-            ({ key, color, size, lat, lng, type }: MarkerPosition) => (
-              <CustomOverlayMap
-                key={key}
-                position={{
-                  lat,
-                  lng,
-                }}
-                ref={(ref: any) => {
-                  if (ref == null) return
-                  const parentNode = ref.cc.parentElement
-                  parentNode.className = "vehicle-marker"
-                }}
-              >
-                <Dot color={color || "dodgerblue"} size={size / level}>
-                  {displayIcon(type)}
-                </Dot>
-              </CustomOverlayMap>
-            )
-          )}
-        </>
-      </KakaoMap>
+      {markerPositions.map(
+        ({ key, color, size, lat, lng, type }: MarkerPosition) => (
+          <CustomOverlayMap
+            key={key}
+            position={{
+              lat,
+              lng,
+            }}
+            ref={(ref: any) => {
+              if (ref == null) return
+              const parentNode = ref.cc.parentElement
+              parentNode.className = "vehicle-marker"
+            }}
+          >
+            <Dot color={color || "dodgerblue"} size={size / level}>
+              {displayIcon(type)}
+            </Dot>
+          </CustomOverlayMap>
+        )
+      )}
     </>
   )
 }
+
+export default Viewer
