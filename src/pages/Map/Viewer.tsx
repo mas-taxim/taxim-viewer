@@ -45,7 +45,7 @@ const Viewer = (): React.ReactElement => {
     setLevel(map.getLevel())
   }, [map])
 
-  const { running, speed } = controls as ControlState
+  const { viewRunning: running, viewSpeed: speed } = controls as ControlState
   const { logs } = status as StatusState
 
   useEffect(() => {
@@ -60,7 +60,7 @@ const Viewer = (): React.ReactElement => {
     if (!running) return
 
     const finish = () => {
-      setControls((prev) => ({ ...prev, running: false }))
+      setControls((prev) => ({ ...prev, viewRunning: false }))
     }
 
     const logsOnPlay: Array<any> = [...logs]

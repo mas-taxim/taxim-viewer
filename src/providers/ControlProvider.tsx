@@ -7,14 +7,14 @@ export interface ContextState<T> {
 
 export interface ControlState {
   mode: "view" | "edit"
-  speed?: number
-  running?: boolean
+  viewSpeed?: number
+  viewRunning?: boolean
 }
 
 const initialState: ControlState = {
   mode: "view",
-  speed: 1.0,
-  running: false,
+  viewSpeed: 1.0,
+  viewRunning: false,
 }
 
 const Context: any = createContext<ContextState<ControlState> | undefined>(

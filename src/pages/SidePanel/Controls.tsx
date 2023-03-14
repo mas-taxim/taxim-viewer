@@ -33,7 +33,7 @@ const Controls = (): React.ReactElement => {
   const [status, setStatus] = useStatusState()
   const [ready, setReady] = useState<boolean>(false)
 
-  const { running } = controls as ControlState
+  const { viewRunning: running } = controls as ControlState
 
   useEffect(() => {
     const { logs } = status as StatusState
@@ -68,7 +68,7 @@ const Controls = (): React.ReactElement => {
               console.log("new value", value)
               setControls((prev: ControlState) => ({
                 ...prev,
-                speed: value as number,
+                viewSpeed: value as number,
               }))
             }}
             style={{
@@ -129,7 +129,7 @@ const Controls = (): React.ReactElement => {
           onClick={() => {
             setControls((prev: ControlState) => ({
               ...prev,
-              running: true,
+              viewRunning: true,
             }))
           }}
         >
