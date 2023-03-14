@@ -1,7 +1,8 @@
 /* global kakao */
 
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useCallback } from "react"
 import Point from "../../components/Point"
+import { useControlState, ControlState } from "../../providers/ControlProvider"
 
 import { CustomOverlayMap, useMap } from "react-kakao-maps-sdk"
 
@@ -15,27 +16,58 @@ const Editor = (): React.ReactElement => {
   const map: kakao.maps.Map = useMap()
   const [nodes, setNodes] = useState<Array<NodeType>>([])
   const [level, setLevel] = useState<number>(1)
+  const [controls, setControls] = useControlState()
+  const [editMode, setEditMode] = useState<string>()
 
   useEffect(() => {
     setLevel(map.getLevel())
   }, [map])
 
   useEffect(() => {
-    map.setCursor("default")
-    const onClick = ({ latLng: loc }: any) => {
+    setEditMode((controls as ControlState).editMode)
+  }, [controls])
+
+  const onMapClick = useCallback(
+    ({ latLng: loc }: any) => {
+      if (editMode !== "add") {
+        return
+      }
       const lat = loc.getLat()
       const lng = loc.getLng()
       setNodes((prev) => [
         ...prev,
         { key: `node-${prev.length}`, lat, lng } as NodeType,
       ])
-    }
-    kakao.maps.event.addListener(map, "click", onClick)
+    },
+    [editMode]
+  )
+
+  useEffect(() => {
+    map.setCursor("default")
+    kakao.maps.event.addListener(map, "click", onMapClick)
     return () => {
       map.setCursor("")
-      kakao.maps.event.removeListener(map, "click", onClick)
+      kakao.maps.event.removeListener(map, "click", onMapClick)
     }
-  }, [map])
+  }, [map, onMapClick])
+
+  const onActivePoint = useCallback(
+    (evt: any) => {
+      if (editMode !== "link") {
+        return
+      }
+    },
+    [editMode]
+  )
+
+  const onReleasePoint = useCallback(
+    (evt: any) => {
+      if (editMode !== "link") {
+        return
+      }
+    },
+    [editMode]
+  )
 
   return (
     <>
@@ -50,9 +82,8 @@ const Editor = (): React.ReactElement => {
           >
             <Point
               size={6 / level}
-              onClick={(evt) => {
-                console.log(evt)
-              }}
+              onMouseDown={onActivePoint}
+              onMouseUp={onReleasePoint}
             />
           </CustomOverlayMap>
         )

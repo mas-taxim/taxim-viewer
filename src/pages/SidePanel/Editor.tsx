@@ -1,27 +1,37 @@
-import React from "react"
+import React, { useMemo } from "react"
 
-import { Stack, FormLabel, RadioGroup, Sheet, Typography } from "@mui/joy"
+import { Stack, RadioGroup, Sheet, Typography } from "@mui/joy"
 import Radio, { radioClasses } from "@mui/joy/Radio"
 import FormControl from "@mui/joy/FormControl"
 import GrainIcon from "@mui/icons-material/Grain"
 import PolylineIcon from "@mui/icons-material/Polyline"
-
-import Card from "../../components/AsideCard"
-
-const radioButtons = [
-  {
-    key: "add-point",
-    text: "점 추가하기",
-    icon: <GrainIcon fontSize="medium" />,
-  },
-  {
-    key: "link-point",
-    text: "점 연결하기",
-    icon: <PolylineIcon fontSize="medium" />,
-  },
-]
+import { useControlState, ControlState } from "../../providers/ControlProvider"
 
 const Editor = (): React.ReactElement => {
+  const [controls, setControls] = useControlState()
+
+  const radioButtons = useMemo(
+    () => [
+      {
+        key: "add-point",
+        text: "점 추가하기",
+        icon: <GrainIcon fontSize="medium" />,
+        onSelect: () => {
+          setControls((prev) => ({ ...prev, editMode: "add" }))
+        },
+      },
+      {
+        key: "link-point",
+        text: "점 연결하기",
+        icon: <PolylineIcon fontSize="medium" />,
+        onSelect: () => {
+          setControls((prev) => ({ ...prev, editMode: "link" }))
+        },
+      },
+    ],
+    [setControls]
+  )
+
   return (
     <>
       <div style={{ marginLeft: "-16px", marginRight: "-16px" }}>
@@ -49,7 +59,7 @@ const Editor = (): React.ReactElement => {
                 },
               }}
             >
-              {radioButtons.map(({ key, text, icon }) => (
+              {radioButtons.map(({ key, text, icon, onSelect }) => (
                 <Sheet
                   key={key}
                   variant="outlined"
@@ -72,6 +82,7 @@ const Editor = (): React.ReactElement => {
                       alignSelf: "flex-end",
                       "--Radio-actionRadius": (theme) => theme.vars.radius.md,
                     }}
+                    onChange={onSelect}
                   />
                   {icon}
                   <Typography>{text}</Typography>

@@ -9,12 +9,14 @@ export interface ControlState {
   mode: "view" | "edit"
   viewSpeed?: number
   viewRunning?: boolean
+  editMode: "add" | "link"
 }
 
 const initialState: ControlState = {
   mode: "view",
   viewSpeed: 1.0,
   viewRunning: false,
+  editMode: "add",
 }
 
 const Context: any = createContext<ContextState<ControlState> | undefined>(
