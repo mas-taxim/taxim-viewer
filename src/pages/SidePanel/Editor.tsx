@@ -46,19 +46,33 @@ const Editor = (): React.ReactElement => {
   const Buttons = useCallback(
     (): React.ReactElement => (
       <>
-        <Button
-          color="primary"
-          variant="soft"
-          component="div"
-          sx={{
+        <label
+          htmlFor="upload-log"
+          style={{
             width: "100%",
-            boxSizing: "border-box",
           }}
-          onClick={controls.editUpload}
         >
-          {/* Upload */}
-          <UploadIcon />
-        </Button>
+          <input
+            style={{ display: "none" }}
+            id="upload-log"
+            name="upload-log"
+            type="file"
+            accept=".json,application/json"
+            onChange={controls.editUpload}
+          />
+          <Button
+            color="primary"
+            variant="soft"
+            component="div"
+            sx={{
+              width: "100%",
+              boxSizing: "border-box",
+            }}
+          >
+            {/* Upload */}
+            <UploadIcon />
+          </Button>
+        </label>
         <Button
           color="info"
           variant="soft"

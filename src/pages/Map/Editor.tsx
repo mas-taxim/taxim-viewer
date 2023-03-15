@@ -106,8 +106,41 @@ const Editor = (): React.ReactElement => {
     // redeclare upload callback
     setControls((prev) => ({
       ...prev,
-      editUpload: () => {
-        window.alert("Upload")
+      editUpload: (evt: any) => {
+        const files = evt.target.files
+        if (!files || files.length < 1) {
+          return
+        }
+        const file = files[0]
+        const reader: FileReader = new FileReader()
+        reader.addEventListener("load", (event: any) => {
+          const result = event.target.result
+          try {
+            const { nodes, edges } = JSON.parse(result)
+            const newNodes: Array<NodeType> = nodes.map(
+              ({ id, lat, lng }: any) =>
+                ({
+                  key: `node-${id}`,
+                  lat,
+                  lng,
+                } as NodeType)
+            )
+            setNodes(newNodes)
+            setEdges(
+              edges.map(
+                ({ from, to }: any) =>
+                  ({
+                    from: newNodes[from] as NodeType,
+                    to: newNodes[to] as NodeType,
+                  } as EdgeType)
+              )
+            )
+            console.log(nodes, edges)
+          } catch {
+            window.alert("Failed to parse JSON")
+          }
+        })
+        reader.readAsText(file)
       },
     }))
     // redeclare download callback
