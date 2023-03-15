@@ -1,6 +1,6 @@
 /* global kakao */
 
-import React, { useEffect, useState, useCallback } from "react"
+import React, { useEffect, useState, useCallback, useMemo } from "react"
 import Point from "../../components/Point"
 import { useControlState, ControlState } from "../../providers/ControlProvider"
 
@@ -25,11 +25,17 @@ const Editor = (): React.ReactElement => {
   const [controls, setControls] = useControlState()
   const [editMode, setEditMode] = useState<string>()
   const [selected, setSelected] = useState<Array<string>>([])
+  const [cursorPos, setCursorPos] = useState<NodeType>()
 
   const isSelected = useCallback(
     (id: string) => selected.indexOf(id) !== -1,
     [selected]
   )
+
+  const selectedNode = useMemo((): NodeType | null => {
+    const node = nodes.filter(({ key }) => isSelected(key))
+    return node.length > 0 ? node[0] : null
+  }, [nodes, isSelected])
 
   useEffect(() => {
     setLevel(map.getLevel())
@@ -46,26 +52,31 @@ const Editor = (): React.ReactElement => {
     )
   }
 
+  const getNode = useCallback(
+    (id: string): NodeType | null => {
+      const node = nodes.filter(({ key }: NodeType) => key === id)
+      return node.length > 0 ? node[0] : null
+    },
+    [nodes]
+  )
+
   useEffect(() => {
     console.log("edges", edges)
   }, [edges])
 
   useEffect(() => {
-    const getNode = (id: string): NodeType | null => {
-      const node = nodes.filter(({ key }: NodeType) => key === id)
-      return node.length > 0 ? node[0] : null
-    }
     console.log("selected", selected)
     if (selected.length >= 2) {
       const [fromID, toID] = selected
       const [from, to] = [getNode(fromID), getNode(toID)]
       if (from !== null && to !== null) {
         createEdge(from, to)
+        setCursorPos(undefined)
         setSelected([])
       }
       return
     }
-  }, [selected, nodes])
+  }, [selected, getNode, setCursorPos])
 
   useEffect(() => {
     setEditMode((controls as ControlState).editMode)
@@ -89,12 +100,27 @@ const Editor = (): React.ReactElement => {
     [editMode]
   )
 
+  const onMapMouseMove = useCallback(
+    (evt: any) => {
+      const { latLng: loc } = evt
+      if (editMode !== "link") {
+        return
+      }
+      const lat = loc.getLat()
+      const lng = loc.getLng()
+      setCursorPos({ key: "cursor", lat, lng } as NodeType)
+    },
+    [editMode, setCursorPos]
+  )
+
   useEffect(() => {
     map.setCursor("default")
     kakao.maps.event.addListener(map, "click", onMapClick)
+    kakao.maps.event.addListener(map, "mousemove", onMapMouseMove)
     return () => {
       map.setCursor("")
       kakao.maps.event.removeListener(map, "click", onMapClick)
+      kakao.maps.event.removeListener(map, "mousemove", onMapMouseMove)
     }
   }, [map, onMapClick])
 
@@ -131,6 +157,28 @@ const Editor = (): React.ReactElement => {
     [editMode]
   )
 
+  const GuideLine = useCallback(
+    (): React.ReactElement => (
+      <>
+        {selectedNode && cursorPos && (
+          <Polyline
+            key={`edge-guide`}
+            path={[selectedNode, cursorPos].map(({ lat, lng }: NodeType) => ({
+              lat,
+              lng,
+            }))}
+            strokeWeight={3}
+            strokeColor="#db4040"
+            strokeOpacity={1}
+            strokeStyle="solid"
+            onCreate={console.log}
+          />
+        )}
+      </>
+    ),
+    [selectedNode, cursorPos]
+  )
+
   return (
     <>
       {edges.map(
@@ -149,6 +197,7 @@ const Editor = (): React.ReactElement => {
           />
         )
       )}
+      <GuideLine />
       {nodes.map(
         ({ key, lat, lng }: NodeType): React.ReactElement => (
           <CustomOverlayMap
