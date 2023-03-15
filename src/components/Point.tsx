@@ -35,30 +35,35 @@ const Container = styled.div`
 `
 
 type PointProps = {
+  id: string
   size?: number
   children?: React.ReactNode | React.ReactNode[]
   onMouseEnter?: React.MouseEventHandler<any>
   onMouseLeave?: React.MouseEventHandler<any>
   onMouseDown?: React.MouseEventHandler<any>
   onMouseUp?: React.MouseEventHandler<any>
+  onClick?: React.MouseEventHandler<any>
 }
 
 const Point = ({
+  id,
   size = 2,
   children,
   onMouseEnter,
   onMouseDown,
   onMouseLeave,
   onMouseUp,
+  onClick,
 }: PointProps) => {
   return (
-    <Container>
+    <Container data-id={id}>
       <Circle
         size={size}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         onMouseDown={onMouseDown}
         onMouseUp={onMouseUp}
+        onClick={onClick}
       >
         <div className="icon">{children}</div>
       </Circle>

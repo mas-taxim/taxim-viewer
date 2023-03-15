@@ -28,14 +28,16 @@ const Editor = (): React.ReactElement => {
   }, [controls])
 
   const onMapClick = useCallback(
-    ({ latLng: loc }: any) => {
+    (evt: any) => {
+      const { latLng: loc } = evt
       if (editMode !== "add") {
         return
       }
       const lat = loc.getLat()
       const lng = loc.getLng()
       setNodes((prev) => {
-        const node = { key: `node-${prev.length}`, lat, lng } as NodeType
+        const nodeId = Math.random().toString(16).slice(2) as string
+        const node = { key: `node-${nodeId}`, lat, lng } as NodeType
         console.log("add node", node)
         return [...prev, node]
       })
@@ -52,16 +54,23 @@ const Editor = (): React.ReactElement => {
     }
   }, [map, onMapClick])
 
-  const onActivePoint = useCallback(
+  const onMouseDownPoint = useCallback(
     (evt: any) => {
-      if (editMode !== "link") {
-        return
+      if (editMode === "add") {
+        const toRemove = evt.button === 2 // 0 for left, 2 for right button
+        if (toRemove) {
+          const container = evt.target.closest("[data-id]") as HTMLElement
+          const id = container.getAttribute("data-id") as string
+          console.log(id, evt, container)
+          setNodes((prev) => [...prev].filter(({ key }) => key !== id))
+        }
+      } else if (editMode === "link") {
       }
     },
-    [editMode]
+    [editMode, setNodes]
   )
 
-  const onReleasePoint = useCallback(
+  const onMouseUpPoint = useCallback(
     (evt: any) => {
       if (editMode !== "link") {
         return
@@ -75,16 +84,17 @@ const Editor = (): React.ReactElement => {
       {nodes.map(
         ({ key, lat, lng }: NodeType): React.ReactElement => (
           <CustomOverlayMap
-            key={key}
             position={{
               lat,
               lng,
             }}
+            key={key}
           >
             <Point
+              id={key}
               size={6 / level}
-              onMouseDown={onActivePoint}
-              onMouseUp={onReleasePoint}
+              onMouseDown={onMouseDownPoint}
+              onMouseUp={onMouseUpPoint}
             />
           </CustomOverlayMap>
         )
