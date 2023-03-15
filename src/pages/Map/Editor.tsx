@@ -37,10 +37,12 @@ const Editor = (): React.ReactElement => {
 
   const createEdge = (from: NodeType, to: NodeType) => {
     setEdges((prev) =>
-      prev.concat({
-        from,
-        to,
-      } as EdgeType)
+      prev
+        .filter((edge) => !(edge.from == from && edge.to == to))
+        .concat({
+          from,
+          to,
+        } as EdgeType)
     )
   }
 
