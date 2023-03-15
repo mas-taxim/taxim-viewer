@@ -3,6 +3,7 @@ import styled from "styled-components"
 
 type CircleStyleProps = {
   size: number
+  selected: boolean
   children?: React.ReactNode | React.ReactNode[]
 }
 
@@ -14,7 +15,8 @@ const Circle = styled.div`
   background: white;
   border-width: 0.15rem;
   border-style: solid;
-  border-color: var(--joy-palette-danger-500, #d3232f);
+  border-color: ${({ selected }: CircleStyleProps) =>
+    selected ? "black" : "var(--joy-palette-danger-500, #d3232f)"};
   border-radius: 8rem;
   align-items: center;
   justify-content: center;
@@ -23,7 +25,8 @@ const Circle = styled.div`
   cursor: pointer;
 
   &:hover {
-    border-color: var(--joy-palette-danger-600, #a10e25);
+    border-color: ${({ selected }: CircleStyleProps) =>
+      selected ? "black" : "var(--joy-palette-danger-600, #a10e25)"};
   }
 `
 
@@ -37,6 +40,7 @@ const Container = styled.div`
 type PointProps = {
   id: string
   size?: number
+  selected?: boolean
   children?: React.ReactNode | React.ReactNode[]
   onMouseEnter?: React.MouseEventHandler<any>
   onMouseLeave?: React.MouseEventHandler<any>
@@ -48,6 +52,7 @@ type PointProps = {
 const Point = ({
   id,
   size = 2,
+  selected = false,
   children,
   onMouseEnter,
   onMouseDown,
@@ -59,6 +64,7 @@ const Point = ({
     <Container data-id={id}>
       <Circle
         size={size}
+        selected={selected}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         onMouseDown={onMouseDown}

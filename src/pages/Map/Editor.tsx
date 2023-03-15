@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from "react"
 import Point from "../../components/Point"
 import { useControlState, ControlState } from "../../providers/ControlProvider"
 
-import { CustomOverlayMap, useMap } from "react-kakao-maps-sdk"
+import { CustomOverlayMap, useMap, Polyline } from "react-kakao-maps-sdk"
 
 type NodeType = {
   key: string
@@ -12,16 +12,58 @@ type NodeType = {
   lng: number
 }
 
+type EdgeType = {
+  from: NodeType
+  to: NodeType
+}
+
 const Editor = (): React.ReactElement => {
   const map: kakao.maps.Map = useMap()
   const [nodes, setNodes] = useState<Array<NodeType>>([])
+  const [edges, setEdges] = useState<Array<EdgeType>>([])
   const [level, setLevel] = useState<number>(1)
   const [controls, setControls] = useControlState()
   const [editMode, setEditMode] = useState<string>()
+  const [selected, setSelected] = useState<Array<string>>([])
+
+  const isSelected = useCallback(
+    (id: string) => selected.indexOf(id) !== -1,
+    [selected]
+  )
 
   useEffect(() => {
     setLevel(map.getLevel())
   }, [map])
+
+  const createEdge = (from: NodeType, to: NodeType) => {
+    setEdges((prev) =>
+      prev.concat({
+        from,
+        to,
+      } as EdgeType)
+    )
+  }
+
+  useEffect(() => {
+    console.log("edges", edges)
+  }, [edges])
+
+  useEffect(() => {
+    const getNode = (id: string): NodeType | null => {
+      const node = nodes.filter(({ key }: NodeType) => key === id)
+      return node.length > 0 ? node[0] : null
+    }
+    console.log("selected", selected)
+    if (selected.length >= 2) {
+      const [fromID, toID] = selected
+      const [from, to] = [getNode(fromID), getNode(toID)]
+      if (from !== null && to !== null) {
+        createEdge(from, to)
+        setSelected([])
+      }
+      return
+    }
+  }, [selected, nodes])
 
   useEffect(() => {
     setEditMode((controls as ControlState).editMode)
@@ -56,18 +98,19 @@ const Editor = (): React.ReactElement => {
 
   const onMouseDownPoint = useCallback(
     (evt: any) => {
+      const container = evt.target.closest("[data-id]") as HTMLElement
+      const id = container.getAttribute("data-id") as string
       if (editMode === "add") {
         const toRemove = evt.button === 2 // 0 for left, 2 for right button
         if (toRemove) {
-          const container = evt.target.closest("[data-id]") as HTMLElement
-          const id = container.getAttribute("data-id") as string
           console.log(id, evt, container)
           setNodes((prev) => [...prev].filter(({ key }) => key !== id))
         }
       } else if (editMode === "link") {
+        setSelected((prev) => prev.filter((i) => i != id).concat(id))
       }
     },
-    [editMode, setNodes]
+    [editMode, setNodes, setSelected]
   )
 
   const onMouseUpPoint = useCallback(
@@ -81,6 +124,22 @@ const Editor = (): React.ReactElement => {
 
   return (
     <>
+      {edges.map(
+        ({ from, to }: EdgeType): React.ReactElement => (
+          <Polyline
+            key={`edge-${from.key}-${to.key}`}
+            path={[from, to].map(({ lat, lng }: NodeType) => ({
+              lat,
+              lng,
+            }))}
+            strokeWeight={3}
+            strokeColor="#db4040"
+            strokeOpacity={1}
+            strokeStyle="solid"
+            onCreate={console.log}
+          />
+        )
+      )}
       {nodes.map(
         ({ key, lat, lng }: NodeType): React.ReactElement => (
           <CustomOverlayMap
@@ -93,6 +152,7 @@ const Editor = (): React.ReactElement => {
             <Point
               id={key}
               size={6 / level}
+              selected={isSelected(key)}
               onMouseDown={onMouseDownPoint}
               onMouseUp={onMouseUpPoint}
             />
