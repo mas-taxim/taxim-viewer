@@ -17,6 +17,17 @@ type EdgeType = {
   to: NodeType
 }
 
+const saveFile = (filename: string, blob: Blob) => {
+  const a = document.createElement("a")
+  a.download = filename
+  a.href = URL.createObjectURL(blob)
+  a.dataset.downloadurl = ["text/json", a.download, a.href].join(":")
+  a.addEventListener("click", (e) => {
+    setTimeout(() => URL.revokeObjectURL(a.href), 30 * 1000)
+  })
+  a.click()
+}
+
 const Editor = (): React.ReactElement => {
   const map: kakao.maps.Map = useMap()
   const [nodes, setNodes] = useState<Array<NodeType>>([])
@@ -60,9 +71,44 @@ const Editor = (): React.ReactElement => {
     [nodes]
   )
 
+  const exportJSON = useCallback((): Blob => {
+    const keys: Array<string> = nodes.map(({ key }) => key)
+    const keyToIndex = (key: string): number => keys.indexOf(key)
+    const obj = {
+      nodes: nodes.map(({ key, lat, lng }: NodeType) => ({
+        id: keyToIndex(key),
+        lat,
+        lng,
+        info: {},
+      })),
+      edges: edges.map(({ from, to }: EdgeType) => ({
+        from: keyToIndex((from as NodeType).key),
+        to: keyToIndex((to as NodeType).key),
+      })),
+    }
+    const blob: Blob = new Blob([JSON.stringify(obj, null, 2)], {
+      type: "application/json",
+    })
+    return blob
+  }, [nodes, edges])
+
   useEffect(() => {
-    console.log("edges", edges)
-  }, [edges])
+    // redeclare upload callback
+    setControls((prev) => ({
+      ...prev,
+      editUpload: () => {
+        window.alert("Upload")
+      },
+    }))
+    // redeclare download callback
+    setControls((prev) => ({
+      ...prev,
+      editDownload: () => {
+        const filename = "graph-" + new Date().toISOString() + ".json"
+        saveFile(filename, exportJSON())
+      },
+    }))
+  }, [exportJSON])
 
   useEffect(() => {
     console.log("selected", selected)
@@ -171,7 +217,6 @@ const Editor = (): React.ReactElement => {
             strokeColor="#db4040"
             strokeOpacity={1}
             strokeStyle="solid"
-            onCreate={console.log}
           />
         )}
       </>
