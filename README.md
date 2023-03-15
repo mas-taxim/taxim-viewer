@@ -1,5 +1,7 @@
 # MARLT Application
 
+[![Build CI](https://github.com/joonas-yoon/MARLT-app/actions/workflows/build.yml/badge.svg)](https://github.com/joonas-yoon/MARLT-app/actions/workflows/build.yml)
+
 Multi-Agent Reinforcement Learning for Taxi Application
 
 ## Requirements
