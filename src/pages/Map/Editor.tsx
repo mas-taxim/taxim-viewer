@@ -216,7 +216,7 @@ const Editor = (): React.ReactElement => {
             strokeWeight={3}
             strokeColor="#db4040"
             strokeOpacity={1}
-            strokeStyle="solid"
+            strokeStyle="dashed"
           />
         )}
       </>
