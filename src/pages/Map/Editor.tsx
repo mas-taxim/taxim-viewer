@@ -102,14 +102,21 @@ const Editor = (): React.ReactElement => {
     (evt: any) => {
       const container = evt.target.closest("[data-id]") as HTMLElement
       const id = container.getAttribute("data-id") as string
+      const mouseType = evt.button as number
       if (editMode === "add") {
-        const toRemove = evt.button === 2 // 0 for left, 2 for right button
-        if (toRemove) {
+        if (mouseType === 2) {
+          // right button
           console.log(id, evt, container)
           setNodes((prev) => [...prev].filter(({ key }) => key !== id))
         }
       } else if (editMode === "link") {
-        setSelected((prev) => prev.filter((i) => i != id).concat(id))
+        if (mouseType === 0) {
+          // left button to select
+          setSelected((prev) => prev.filter((i) => i != id).concat(id))
+        } else if (mouseType === 2) {
+          // right button to unselect
+          setSelected((prev) => prev.filter((i) => i != id))
+        }
       }
     },
     [editMode, setNodes, setSelected]
