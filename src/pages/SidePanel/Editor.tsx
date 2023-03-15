@@ -1,10 +1,14 @@
-import React, { useMemo, useState, useEffect } from "react"
+import React, { useMemo, useState, useEffect, useCallback } from "react"
 
-import { Stack, RadioGroup, Sheet, Typography } from "@mui/joy"
+import { Stack, Button, RadioGroup, Sheet, Typography } from "@mui/joy"
 import Radio, { radioClasses } from "@mui/joy/Radio"
+
 import FormControl from "@mui/joy/FormControl"
 import GrainIcon from "@mui/icons-material/Grain"
 import PolylineIcon from "@mui/icons-material/Polyline"
+import UploadIcon from "@mui/icons-material/Upload"
+import DownloadIcon from "@mui/icons-material/Download"
+
 import { useControlState, ControlState } from "../../providers/ControlProvider"
 
 const Editor = (): React.ReactElement => {
@@ -38,6 +42,40 @@ const Editor = (): React.ReactElement => {
       (controls as ControlState).editMode === "add" ? "add-point" : "link-point"
     )
   }, [controls])
+
+  const Buttons = useCallback(
+    (): React.ReactElement => (
+      <>
+        <Button
+          color="primary"
+          variant="soft"
+          component="div"
+          sx={{
+            width: "100%",
+            boxSizing: "border-box",
+          }}
+          onClick={controls.editUpload}
+        >
+          {/* Upload */}
+          <UploadIcon />
+        </Button>
+        <Button
+          color="info"
+          variant="soft"
+          component="div"
+          sx={{
+            width: "100%",
+            boxSizing: "border-box",
+          }}
+          onClick={controls.editDownload}
+        >
+          {/* Download */}
+          <DownloadIcon />
+        </Button>
+      </>
+    ),
+    [controls]
+  )
 
   return (
     <>
@@ -97,6 +135,7 @@ const Editor = (): React.ReactElement => {
               ))}
             </RadioGroup>
           </FormControl>
+          <Buttons />
         </Stack>
       </div>
     </>
