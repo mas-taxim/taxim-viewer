@@ -52,6 +52,16 @@ const Editor = (): React.ReactElement => {
     setLevel(map.getLevel())
   }, [map])
 
+  useEffect(() => {
+    // update edge to sync up
+    setEdges((prev) =>
+      prev.filter(
+        ({ from, to }: EdgeType) =>
+          nodes.indexOf(from) !== -1 && nodes.indexOf(to) !== -1
+      )
+    )
+  }, [nodes, setEdges])
+
   const createEdge = (from: NodeType, to: NodeType) => {
     setEdges((prev) =>
       prev
