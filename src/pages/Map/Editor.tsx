@@ -1,8 +1,6 @@
 /* global kakao */
 
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react"
-import IconButton from "@mui/joy/IconButton"
-import Tooltip from "@mui/joy/Tooltip"
 
 import GrainIcon from "@mui/icons-material/Grain"
 import PolylineIcon from "@mui/icons-material/Polyline"
@@ -11,6 +9,7 @@ import UploadIcon from "@mui/icons-material/Upload"
 import DownloadIcon from "@mui/icons-material/Download"
 
 import Point from "../../components/Point"
+import IconButton from "../../components/IconButton"
 import HorizontalContainer, {
   Divider,
 } from "../../components/HorizontalContainer"
@@ -31,31 +30,29 @@ type EdgeType = {
 
 type MenuButtonProps = {
   title: string
-  active: boolean
+  active?: boolean
   icon: React.ReactElement
   onClick: () => void
 }
 
-const MenuButton = ({ title, active, icon, onClick }: MenuButtonProps) => {
+const MenuButton = ({
+  title,
+  active = false,
+  icon,
+  onClick,
+}: MenuButtonProps) => {
   return (
-    <Tooltip
-      arrow
-      title={title}
-      color="primary"
-      placement="top"
-      size="sm"
+    <IconButton
+      tooltip={title}
+      tooltipColor="primary"
+      tooltipPlacement="top"
+      active={active}
       variant="outlined"
+      size={"32px"}
+      onClick={onClick}
     >
-      <IconButton
-        variant={active ? "solid" : "soft"}
-        sx={{
-          "--IconButton-size": "32px",
-        }}
-        onClick={onClick}
-      >
-        {icon}
-      </IconButton>
-    </Tooltip>
+      {icon}
+    </IconButton>
   )
 }
 
@@ -281,7 +278,6 @@ const Editor = (): React.ReactElement => {
       if (editMode === "add") {
         if (mouseType === 2) {
           // right button
-          console.log(id, evt, container)
           setNodes((prev) => [...prev].filter(({ key }) => key !== id))
         }
       } else if (editMode === "link") {
@@ -375,7 +371,6 @@ const Editor = (): React.ReactElement => {
           />
           <MenuButton
             title="업로드"
-            active={false}
             icon={<UploadIcon />}
             onClick={() => {
               if (ref.current) {
@@ -392,7 +387,6 @@ const Editor = (): React.ReactElement => {
     (): React.ReactElement => (
       <MenuButton
         title="다운로드"
-        active={false}
         icon={<DownloadIcon />}
         onClick={() => {
           if (controls.editDownload) {
