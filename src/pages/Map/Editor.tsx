@@ -24,8 +24,8 @@ type NodeType = {
 }
 
 type EdgeType = {
-  from: NodeType
-  to: NodeType
+  from: string
+  to: string
 }
 
 const ButtonContainerStyled = styled.div`
@@ -115,27 +115,13 @@ const Editor = (): React.ReactElement => {
     return node.length > 0 ? node[0] : null
   }, [nodes, isSelected])
 
-  useEffect(() => {
-    setLevel(map.getLevel())
-  }, [map])
-
-  useEffect(() => {
-    // update edge to sync up
-    setEdges((prev) =>
-      prev.filter(
-        ({ from, to }: EdgeType) =>
-          nodes.indexOf(from) !== -1 && nodes.indexOf(to) !== -1
-      )
-    )
-  }, [nodes, setEdges])
-
   const createEdge = (from: NodeType, to: NodeType) => {
     setEdges((prev) =>
       prev
-        .filter((edge) => !(edge.from == from && edge.to == to))
+        .filter((edge) => !(edge.from == from.key && edge.to == to.key))
         .concat({
-          from,
-          to,
+          from: from.key,
+          to: to.key,
         } as EdgeType)
     )
   }
@@ -148,6 +134,22 @@ const Editor = (): React.ReactElement => {
     [nodes]
   )
 
+  const hasNode = useCallback(
+    (id: string): boolean => getNode(id) !== null,
+    [getNode]
+  )
+
+  useEffect(() => {
+    setLevel(map.getLevel())
+  }, [map])
+
+  useEffect(() => {
+    // update edge to sync up
+    setEdges((prev) =>
+      prev.filter(({ from, to }: EdgeType) => hasNode(from) && hasNode(to))
+    )
+  }, [hasNode, setEdges])
+
   const exportJSON = useCallback((): Blob => {
     const keys: Array<string> = nodes.map(({ key }) => key)
     const keyToIndex = (key: string): number => keys.indexOf(key)
@@ -159,8 +161,8 @@ const Editor = (): React.ReactElement => {
         info: {},
       })),
       edges: edges.map(({ from, to }: EdgeType) => ({
-        from: keyToIndex((from as NodeType).key),
-        to: keyToIndex((to as NodeType).key),
+        from: keyToIndex(from),
+        to: keyToIndex(to),
       })),
     }
     const blob: Blob = new Blob([JSON.stringify(obj, null, 2)], {
@@ -197,8 +199,8 @@ const Editor = (): React.ReactElement => {
               edges.map(
                 ({ from, to }: any) =>
                   ({
-                    from: newNodes[from] as NodeType,
-                    to: newNodes[to] as NodeType,
+                    from: (newNodes[from] as NodeType).key,
+                    to: (newNodes[to] as NodeType).key,
                   } as EdgeType)
               )
             )
@@ -457,11 +459,17 @@ const Editor = (): React.ReactElement => {
   const EdgeLines = useCallback(
     (): React.ReactElement => (
       <>
-        {edges.map(
-          ({ from, to }: EdgeType): React.ReactElement => (
+        {edges.map(({ from, to }: EdgeType): React.ReactElement => {
+          const path: Array<any> = [from, to]
+            .map(getNode)
+            .filter((n) => n !== null)
+          if (path.length != 2) {
+            return <></>
+          }
+          return (
             <Polyline
-              key={`edge-${from.key}-${to.key}`}
-              path={[from, to].map(({ lat, lng }: NodeType) => ({
+              key={`edge-${from}-${to}`}
+              path={path.map(({ lat, lng }: NodeType) => ({
                 lat,
                 lng,
               }))}
@@ -472,10 +480,10 @@ const Editor = (): React.ReactElement => {
               onCreate={console.log}
             />
           )
-        )}
+        })}
       </>
     ),
-    [edges]
+    [edges, getNode]
   )
 
   return (
