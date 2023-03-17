@@ -256,29 +256,45 @@ const Editor = (): React.ReactElement => {
     [editMode]
   )
 
+  const onMapMouseUp = useCallback((evt: any) => {}, [])
+
   const onMapMouseMove = useCallback(
     (evt: any) => {
       const { latLng: loc } = evt
-      if (editMode !== "link") {
-        return
-      }
       const lat = loc.getLat()
       const lng = loc.getLng()
-      setCursorPos({ key: "cursor", lat, lng } as NodeType)
+      if (editMode === "link") {
+        setCursorPos({ key: "cursor", lat, lng } as NodeType)
+      } else if (editMode === "move") {
+        if (selected.length != 1) {
+          return
+        }
+        setNodes((prev) =>
+          prev.map((node: NodeType): NodeType => {
+            if (selected[0] !== node.key) {
+              return node
+            } else {
+              return { ...node, lat, lng }
+            }
+          })
+        )
+      }
     },
-    [editMode, setCursorPos]
+    [editMode, setNodes, selected, setCursorPos]
   )
 
   useEffect(() => {
     map.setCursor("default")
     kakao.maps.event.addListener(map, "click", onMapClick)
+    kakao.maps.event.addListener(map, "mouseup", onMapMouseUp)
     kakao.maps.event.addListener(map, "mousemove", onMapMouseMove)
     return () => {
       map.setCursor("")
       kakao.maps.event.removeListener(map, "click", onMapClick)
+      kakao.maps.event.removeListener(map, "mouseup", onMapMouseUp)
       kakao.maps.event.removeListener(map, "mousemove", onMapMouseMove)
     }
-  }, [map, onMapClick])
+  }, [map, onMapClick, onMapMouseUp, onMapMouseMove])
 
   const onMouseDownPoint = useCallback(
     (evt: any) => {
@@ -299,24 +315,22 @@ const Editor = (): React.ReactElement => {
           // right button to unselect
           setSelected((prev) => prev.filter((i) => i != id))
         }
+      } else if (editMode === "move") {
+        if (mouseType === 0) {
+          // left button to move
+          setSelected((prev) => (prev.length > 0 ? [] : [id]))
+        }
       }
     },
     [editMode, setNodes, setSelected]
   )
 
-  const onMouseUpPoint = useCallback(
-    (evt: any) => {
-      if (editMode !== "link") {
-        return
-      }
-    },
-    [editMode]
-  )
+  const onMouseUpPoint = useCallback((evt: any) => {}, [])
 
   const GuideLine = useCallback(
     (): React.ReactElement => (
       <>
-        {selectedNode && cursorPos && (
+        {editMode === "link" && selectedNode && cursorPos && (
           <Polyline
             key={`edge-guide`}
             path={[selectedNode, cursorPos].map(({ lat, lng }: NodeType) => ({
@@ -331,7 +345,7 @@ const Editor = (): React.ReactElement => {
         )}
       </>
     ),
-    [selectedNode, cursorPos]
+    [editMode, selectedNode, cursorPos]
   )
 
   const onSelectMode = (editMode: string) => {
@@ -383,11 +397,10 @@ const Editor = (): React.ReactElement => {
             onChange={controls.editUpload}
           />
           <MenuButton
-            id="upload"
             title="업로드"
             active={false}
             icon={<UploadIcon />}
-            onClick={(id: string) => {
+            onClick={() => {
               if (ref.current) {
                 ref.current.click()
               }
@@ -401,11 +414,10 @@ const Editor = (): React.ReactElement => {
   const DownloadButton = useCallback(
     (): React.ReactElement => (
       <MenuButton
-        id="download"
         title="다운로드"
         active={false}
         icon={<DownloadIcon />}
-        onClick={(id: string) => {
+        onClick={() => {
           if (controls.editDownload) {
             controls.editDownload()
           }
@@ -415,44 +427,62 @@ const Editor = (): React.ReactElement => {
     [controls]
   )
 
+  const NodePoints = useCallback(
+    (): React.ReactElement => (
+      <>
+        {nodes.map(
+          ({ key, lat, lng }: NodeType): React.ReactElement => (
+            <CustomOverlayMap
+              position={{
+                lat,
+                lng,
+              }}
+              key={key}
+            >
+              <Point
+                id={key}
+                size={6 / level}
+                selected={isSelected(key)}
+                onMouseDown={onMouseDownPoint}
+                onMouseUp={onMouseUpPoint}
+              />
+            </CustomOverlayMap>
+          )
+        )}
+      </>
+    ),
+    [nodes, level, isSelected, onMouseDownPoint, onMouseUpPoint]
+  )
+
+  const EdgeLines = useCallback(
+    (): React.ReactElement => (
+      <>
+        {edges.map(
+          ({ from, to }: EdgeType): React.ReactElement => (
+            <Polyline
+              key={`edge-${from.key}-${to.key}`}
+              path={[from, to].map(({ lat, lng }: NodeType) => ({
+                lat,
+                lng,
+              }))}
+              strokeWeight={3}
+              strokeColor="#db4040"
+              strokeOpacity={1}
+              strokeStyle="solid"
+              onCreate={console.log}
+            />
+          )
+        )}
+      </>
+    ),
+    [edges]
+  )
+
   return (
     <>
-      {edges.map(
-        ({ from, to }: EdgeType): React.ReactElement => (
-          <Polyline
-            key={`edge-${from.key}-${to.key}`}
-            path={[from, to].map(({ lat, lng }: NodeType) => ({
-              lat,
-              lng,
-            }))}
-            strokeWeight={3}
-            strokeColor="#db4040"
-            strokeOpacity={1}
-            strokeStyle="solid"
-            onCreate={console.log}
-          />
-        )
-      )}
+      <EdgeLines />
       <GuideLine />
-      {nodes.map(
-        ({ key, lat, lng }: NodeType): React.ReactElement => (
-          <CustomOverlayMap
-            position={{
-              lat,
-              lng,
-            }}
-            key={key}
-          >
-            <Point
-              id={key}
-              size={6 / level}
-              selected={isSelected(key)}
-              onMouseDown={onMouseDownPoint}
-              onMouseUp={onMouseUpPoint}
-            />
-          </CustomOverlayMap>
-        )
-      )}
+      <NodePoints />
       <ButtonContainerStyled>
         <ButtonGroupStyled>
           <ModeButtons />
