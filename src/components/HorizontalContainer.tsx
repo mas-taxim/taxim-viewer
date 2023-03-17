@@ -27,10 +27,10 @@ const ContainerStyled = styled.div<{ position: "top" | "bottom" }>`
         `}
 `
 
-const ContentStyled = styled.div`
+const ContentStyled = styled.div<{ gap: number }>`
   display: flex;
   flex-direction: row;
-  gap: 0.5rem;
+  gap: ${({ gap }: any) => `${gap}rem`};
   margin: 0px auto;
   place-items: center;
   box-sizing: border-box;
@@ -38,14 +38,18 @@ const ContentStyled = styled.div`
 
 type ContainerProps = React.PropsWithChildren & {
   position: "top" | "bottom"
+  gap?: number
+  style?: React.CSSProperties
 }
 
 const HorizontalContainer = ({
   position,
+  gap = 0.5,
+  style = {},
   children,
 }: ContainerProps): React.ReactElement => (
-  <ContainerStyled position={position}>
-    <ContentStyled>{children}</ContentStyled>
+  <ContainerStyled position={position} style={style}>
+    <ContentStyled gap={gap}>{children}</ContentStyled>
   </ContainerStyled>
 )
 

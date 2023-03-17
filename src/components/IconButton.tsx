@@ -32,45 +32,6 @@ type IconButtonProps = React.PropsWithChildren & {
   onClick: () => void
 }
 
-// const IconButton = ({
-//   tooltip = undefined,
-//   tooltipColor = "primary",
-//   tooltipPlacement = "bottom",
-//   tooltipSize = "sm",
-//   active,
-//   variant = "plain",
-//   size,
-//   onClick,
-//   children,
-// }: IconButtonProps) => {
-//   const Button = useCallback(
-//     () => (
-//       <MuiIconButton
-//         variant={active ? "solid" : "soft"}
-//         sx={{
-//           "--IconButton-size": size,
-//         }}
-//         onClick={onClick}
-//       >
-//         {children}
-//       </MuiIconButton>
-//     ),
-//     [active, onClick, children]
-//   )
-//   return (
-//     <MuiTooltip
-//       arrow
-//       title={tooltip}
-//       color={tooltipColor}
-//       placement={tooltipPlacement}
-//       size={tooltipSize}
-//       variant={variant}
-//     >
-//       <Button />
-//     </MuiTooltip>
-//   )
-// }
-
 const IconButton = ({
   tooltip = undefined,
   tooltipColor = "primary",
