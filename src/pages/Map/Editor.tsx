@@ -1,11 +1,16 @@
 /* global kakao */
 
-import React, { useEffect, useState, useCallback, useMemo } from "react"
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react"
 import IconButton from "@mui/joy/IconButton"
+import Button from "@mui/joy/Button"
 import Tooltip from "@mui/joy/Tooltip"
+import Divider from "@mui/joy/Divider"
+
 import GrainIcon from "@mui/icons-material/Grain"
 import PolylineIcon from "@mui/icons-material/Polyline"
 import OpenWithIcon from "@mui/icons-material/OpenWith"
+import UploadIcon from "@mui/icons-material/Upload"
+import DownloadIcon from "@mui/icons-material/Download"
 
 import Point from "../../components/Point"
 import { useControlState, ControlState } from "../../providers/ControlProvider"
@@ -337,6 +342,58 @@ const Editor = (): React.ReactElement => {
     setEditMode(editMode)
   }
 
+  const UploadButton = useCallback((): React.ReactElement => {
+    const ref = useRef<HTMLInputElement>(null)
+    return (
+      <>
+        <label
+          htmlFor="upload-log"
+          style={{
+            width: "100%",
+          }}
+        >
+          <input
+            ref={ref}
+            style={{ display: "none" }}
+            id="upload-log"
+            name="upload-log"
+            type="file"
+            accept=".json,application/json"
+            onChange={controls.editUpload}
+          />
+          <MenuButton
+            id="upload"
+            title="업로드"
+            active={false}
+            icon={<UploadIcon />}
+            onClick={(id: string) => {
+              if (ref.current) {
+                ref.current.click()
+              }
+            }}
+          />
+        </label>
+      </>
+    )
+  }, [controls])
+
+  const DownloadButton = useCallback(
+    (): React.ReactElement => (
+      <MenuButton
+        id="download"
+        title="다운로드"
+        active={false}
+        icon={<DownloadIcon />}
+        onClick={(id: string) => {
+          if (controls.editDownload) {
+            controls.editDownload()
+          }
+        }}
+      />
+    ),
+    [controls]
+  )
+
   return (
     <>
       {edges.map(
@@ -398,6 +455,9 @@ const Editor = (): React.ReactElement => {
             icon={<OpenWithIcon />}
             onClick={onSelectMode}
           />
+          <Divider orientation="vertical" />
+          <UploadButton />
+          <DownloadButton />
         </ButtonGroupStyled>
       </ButtonContainerStyled>
     </>

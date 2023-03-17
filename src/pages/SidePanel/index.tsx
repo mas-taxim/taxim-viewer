@@ -7,7 +7,6 @@ import CableIcon from "@mui/icons-material/Cable"
 import LocalTaxiIcon from "@mui/icons-material/LocalTaxi"
 import Controls from "./Controls"
 import Status from "./Status"
-import Editor from "./Editor"
 import { useControlState, ControlState } from "../../providers/ControlProvider"
 
 const SidePanel = (): React.ReactElement => {
@@ -73,9 +72,7 @@ const SidePanel = (): React.ReactElement => {
           <Controls />
           <Status />
         </TabPanel>
-        <TabPanel value={1} sx={{ p: 2 }}>
-          <Editor />
-        </TabPanel>
+        <TabPanel value={1} sx={{ p: 2 }}></TabPanel>
       </Tabs>
     </>
   )
