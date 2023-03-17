@@ -1,10 +1,17 @@
 /* global kakao */
 
 import React, { useEffect, useState, useCallback, useMemo } from "react"
+import IconButton from "@mui/joy/IconButton"
+import Tooltip from "@mui/joy/Tooltip"
+import GrainIcon from "@mui/icons-material/Grain"
+import PolylineIcon from "@mui/icons-material/Polyline"
+import OpenWithIcon from "@mui/icons-material/OpenWith"
+
 import Point from "../../components/Point"
 import { useControlState, ControlState } from "../../providers/ControlProvider"
 
 import { CustomOverlayMap, useMap, Polyline } from "react-kakao-maps-sdk"
+import styled from "styled-components"
 
 type NodeType = {
   key: string
@@ -15,6 +22,65 @@ type NodeType = {
 type EdgeType = {
   from: NodeType
   to: NodeType
+}
+
+const ButtonContainerStyled = styled.div`
+  position: absolute;
+  display: flex;
+  left: calc(200px + 50%);
+  translate: -50% 0%;
+  bottom: 1rem;
+  margin: 0 auto;
+  width: fit-content;
+  height: 42px;
+  place-items: center;
+  padding: 6px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 1em;
+  box-sizing: border-box;
+`
+
+const ButtonGroupStyled = styled.div`
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  margin: 0px auto;
+  place-items: center;
+  box-sizing: border-box;
+`
+
+type MenuButtonProps = {
+  id: string
+  title: string
+  active: boolean
+  icon: React.ReactElement
+  onClick: (id: string) => void
+}
+
+const MenuButton = ({ id, title, active, icon, onClick }: MenuButtonProps) => {
+  return (
+    <Tooltip
+      arrow
+      title={title}
+      color="primary"
+      placement="top"
+      size="sm"
+      variant="outlined"
+    >
+      <IconButton
+        variant={active ? "solid" : "soft"}
+        sx={{
+          "--IconButton-size": "32px",
+        }}
+        onClick={() => {
+          onClick(id)
+        }}
+      >
+        {icon}
+      </IconButton>
+    </Tooltip>
+  )
 }
 
 const saveFile = (filename: string, blob: Blob) => {
@@ -267,6 +333,10 @@ const Editor = (): React.ReactElement => {
     [selectedNode, cursorPos]
   )
 
+  const onSelectMode = (editMode: string) => {
+    setEditMode(editMode)
+  }
+
   return (
     <>
       {edges.map(
@@ -305,6 +375,31 @@ const Editor = (): React.ReactElement => {
           </CustomOverlayMap>
         )
       )}
+      <ButtonContainerStyled>
+        <ButtonGroupStyled>
+          <MenuButton
+            id="add"
+            title="점 추가/삭제"
+            active={editMode === "add"}
+            icon={<GrainIcon />}
+            onClick={onSelectMode}
+          />
+          <MenuButton
+            id="link"
+            title="점 연결"
+            active={editMode === "link"}
+            icon={<PolylineIcon />}
+            onClick={onSelectMode}
+          />
+          <MenuButton
+            id="move"
+            title="점 이동"
+            active={editMode === "move"}
+            icon={<OpenWithIcon />}
+            onClick={onSelectMode}
+          />
+        </ButtonGroupStyled>
+      </ButtonContainerStyled>
     </>
   )
 }
