@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react"
 import IconButton from "@mui/joy/IconButton"
-import Button from "@mui/joy/Button"
 import Tooltip from "@mui/joy/Tooltip"
 import Divider from "@mui/joy/Divider"
 
@@ -56,14 +55,13 @@ const ButtonGroupStyled = styled.div`
 `
 
 type MenuButtonProps = {
-  id: string
   title: string
   active: boolean
   icon: React.ReactElement
-  onClick: (id: string) => void
+  onClick: () => void
 }
 
-const MenuButton = ({ id, title, active, icon, onClick }: MenuButtonProps) => {
+const MenuButton = ({ title, active, icon, onClick }: MenuButtonProps) => {
   return (
     <Tooltip
       arrow
@@ -78,9 +76,7 @@ const MenuButton = ({ id, title, active, icon, onClick }: MenuButtonProps) => {
         sx={{
           "--IconButton-size": "32px",
         }}
-        onClick={() => {
-          onClick(id)
-        }}
+        onClick={onClick}
       >
         {icon}
       </IconButton>
@@ -240,7 +236,7 @@ const Editor = (): React.ReactElement => {
 
   useEffect(() => {
     setEditMode((controls as ControlState).editMode)
-  }, [controls])
+  }, [(controls as ControlState).editMode])
 
   const onMapClick = useCallback(
     (evt: any) => {
@@ -342,6 +338,31 @@ const Editor = (): React.ReactElement => {
     setEditMode(editMode)
   }
 
+  const ModeButtons = useCallback((): React.ReactElement => {
+    return (
+      <>
+        <MenuButton
+          title="점 추가/삭제"
+          active={editMode === "add"}
+          icon={<GrainIcon />}
+          onClick={() => onSelectMode("add")}
+        />
+        <MenuButton
+          title="점 연결"
+          active={editMode === "link"}
+          icon={<PolylineIcon />}
+          onClick={() => onSelectMode("link")}
+        />
+        <MenuButton
+          title="점 이동"
+          active={editMode === "move"}
+          icon={<OpenWithIcon />}
+          onClick={() => onSelectMode("move")}
+        />
+      </>
+    )
+  }, [editMode])
+
   const UploadButton = useCallback((): React.ReactElement => {
     const ref = useRef<HTMLInputElement>(null)
     return (
@@ -434,27 +455,7 @@ const Editor = (): React.ReactElement => {
       )}
       <ButtonContainerStyled>
         <ButtonGroupStyled>
-          <MenuButton
-            id="add"
-            title="점 추가/삭제"
-            active={editMode === "add"}
-            icon={<GrainIcon />}
-            onClick={onSelectMode}
-          />
-          <MenuButton
-            id="link"
-            title="점 연결"
-            active={editMode === "link"}
-            icon={<PolylineIcon />}
-            onClick={onSelectMode}
-          />
-          <MenuButton
-            id="move"
-            title="점 이동"
-            active={editMode === "move"}
-            icon={<OpenWithIcon />}
-            onClick={onSelectMode}
-          />
+          <ModeButtons />
           <Divider orientation="vertical" />
           <UploadButton />
           <DownloadButton />
