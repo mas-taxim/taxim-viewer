@@ -3,7 +3,6 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react"
 import IconButton from "@mui/joy/IconButton"
 import Tooltip from "@mui/joy/Tooltip"
-import Divider from "@mui/joy/Divider"
 
 import GrainIcon from "@mui/icons-material/Grain"
 import PolylineIcon from "@mui/icons-material/Polyline"
@@ -12,10 +11,12 @@ import UploadIcon from "@mui/icons-material/Upload"
 import DownloadIcon from "@mui/icons-material/Download"
 
 import Point from "../../components/Point"
+import HorizontalContainer, {
+  Divider,
+} from "../../components/HorizontalContainer"
 import { useControlState, ControlState } from "../../providers/ControlProvider"
 
 import { CustomOverlayMap, useMap, Polyline } from "react-kakao-maps-sdk"
-import styled from "styled-components"
 
 type NodeType = {
   key: string
@@ -27,32 +28,6 @@ type EdgeType = {
   from: string
   to: string
 }
-
-const ButtonContainerStyled = styled.div`
-  position: absolute;
-  display: flex;
-  left: calc(200px + 50%);
-  translate: -50% 0%;
-  bottom: 1rem;
-  margin: 0 auto;
-  width: fit-content;
-  height: 42px;
-  place-items: center;
-  padding: 6px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 1em;
-  box-sizing: border-box;
-`
-
-const ButtonGroupStyled = styled.div`
-  display: flex;
-  flex-direction: row;
-  gap: 0.5rem;
-  margin: 0px auto;
-  place-items: center;
-  box-sizing: border-box;
-`
 
 type MenuButtonProps = {
   title: string
@@ -491,14 +466,12 @@ const Editor = (): React.ReactElement => {
       <EdgeLines />
       <GuideLine />
       <NodePoints />
-      <ButtonContainerStyled>
-        <ButtonGroupStyled>
-          <ModeButtons />
-          <Divider orientation="vertical" />
-          <UploadButton />
-          <DownloadButton />
-        </ButtonGroupStyled>
-      </ButtonContainerStyled>
+      <HorizontalContainer position="bottom">
+        <ModeButtons />
+        <Divider />
+        <UploadButton />
+        <DownloadButton />
+      </HorizontalContainer>
     </>
   )
 }
