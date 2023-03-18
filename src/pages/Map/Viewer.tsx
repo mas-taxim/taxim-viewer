@@ -1,3 +1,5 @@
+/* global kakao */
+
 import React, { useEffect, useState, useCallback } from "react"
 
 import Dot from "../../components/Dot"
@@ -144,8 +146,39 @@ const Viewer = (): React.ReactElement => {
     }
   }, [running, speed, progressCurrent])
 
+  const fitMapBound = useCallback(
+    (nodes: Array<{ lat: number; lng: number }>) => {
+      if (nodes.length < 1) return
+      const bounds = new kakao.maps.LatLngBounds()
+      nodes.forEach(({ lat, lng }) => {
+        bounds.extend(new kakao.maps.LatLng(lat, lng))
+      })
+      map.setBounds(bounds)
+    },
+    [map]
+  )
+
   useEffect(() => {
-    if (!logs) return
+    if (!logs || logs.length < 1) return
+
+    const positions = logs
+      .map(({ vehicles, tasks }: any) =>
+        vehicles
+          .map(({ lat, lng }: any) => ({ lat, lng }))
+          .concat(
+            ...tasks.map(({ pick_lat, pick_lng, drop_lat, drop_lng }: any) => [
+              {
+                lat: pick_lat,
+                lng: pick_lng,
+              },
+              {
+                lat: drop_lat,
+                lng: drop_lng,
+              },
+            ])
+          )
+      )
+      .flat()
 
     // collect and create pairs of name and color
     const nameKeyValueMap: ColorName = [
@@ -177,7 +210,8 @@ const Viewer = (): React.ReactElement => {
 
     setColors(nameKeyValueMap)
     setProgressMax(logs.length - 1)
-  }, [logs])
+    fitMapBound(positions)
+  }, [logs, fitMapBound])
 
   const displayIcon = useCallback((iconType: number) => {
     const iconStyle = {

@@ -1,10 +1,9 @@
 /* global kakao */
 
-import React, { useEffect, useState, useCallback, useMemo, useRef } from "react"
+import React, { useEffect, useState, useCallback, useMemo } from "react"
 
 import Point from "../../components/Point"
 import EditorButtons from "./Controls/EditorButtons"
-import { useControlState, ControlState } from "../../providers/ControlProvider"
 import { jsonToBlob, saveFile } from "../../helpers/fileInteracts"
 
 import { CustomOverlayMap, useMap, Polyline } from "react-kakao-maps-sdk"
@@ -276,6 +275,18 @@ const Editor = (): React.ReactElement => {
     [edges, getNode]
   )
 
+  const fitMapBound = useCallback(
+    (nodes: NodeType[]) => {
+      if (nodes.length < 1) return
+      const bounds = new kakao.maps.LatLngBounds()
+      nodes.forEach(({ lat, lng }) => {
+        bounds.extend(new kakao.maps.LatLng(lat, lng))
+      })
+      map.setBounds(bounds)
+    },
+    [map]
+  )
+
   const loadGraphFromFile = useCallback(
     (evt: React.ChangeEvent<HTMLInputElement>) => {
       const files = evt.target.files
@@ -306,6 +317,7 @@ const Editor = (): React.ReactElement => {
                 } as EdgeType)
             )
           )
+          fitMapBound(nodes)
           console.log(nodes, edges)
         } catch {
           window.alert("Failed to parse JSON")
