@@ -6,7 +6,6 @@ import HailIcon from "@mui/icons-material/Hail"
 import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown"
 import { CustomOverlayMap, useMap } from "react-kakao-maps-sdk"
 
-import { useControlState, ControlState } from "../../providers/ControlProvider"
 import { useStatusState, StatusState } from "../../providers/StatusProvider"
 import ViewerButtons from "./ViewerButtons"
 
@@ -36,10 +35,10 @@ const Viewer = (): React.ReactElement => {
   const [markerPositions, setMarkerPositions] = useState<Array<MarkerPosition>>(
     []
   )
-  const [controls, setControls] = useControlState()
   const [status, setStatus] = useStatusState()
-  const [level, setLevel] = useState<number>(1)
+  const [level, setLevel] = useState<number>(3)
   const [runable, setRunable] = useState<boolean>(false)
+  const [running, setRunning] = useState<boolean>(false)
 
   useEffect(() => {
     const { logs } = status as StatusState
@@ -52,12 +51,10 @@ const Viewer = (): React.ReactElement => {
     setLevel(map.getLevel())
   }, [map])
 
-  const { viewRunning: running, viewSpeed: speed } = controls as ControlState
   const { logs } = status as StatusState
+  const speed = 8.0
 
   useEffect(() => {
-    console.log(controls)
-
     // 1 frame contains 60 secs
     const DEFAULT_TIMESTEP = 60 * 1000
     // 1 frame / 1000 ms
@@ -66,9 +63,7 @@ const Viewer = (): React.ReactElement => {
 
     if (!running) return
 
-    const finish = () => {
-      setControls((prev) => ({ ...prev, viewRunning: false }))
-    }
+    const finish = () => setRunning(false)
 
     const logsOnPlay: Array<any> = [...logs]
 
@@ -182,16 +177,12 @@ const Viewer = (): React.ReactElement => {
         )
       )}
       <ViewerButtons
-        running={false}
+        running={running}
         runable={runable}
-        onClickPlay={() => {
-          console.log("play")
-          return false
-        }}
+        onClickPlay={() => setRunning(!running)}
         onClickUpload={(evt: React.ChangeEvent<HTMLInputElement>) => {
           const files = evt.target.files
           if (!files || files.length < 1) {
-            setRunable(false)
             return
           }
           const file = files[0]
@@ -201,10 +192,8 @@ const Viewer = (): React.ReactElement => {
             try {
               const { logs } = JSON.parse(result)
               setStatus((prev) => ({ ...prev, logs }))
-              setRunable(true)
             } catch {
               window.alert("Wrong JSON file format")
-              setRunable(false)
             }
           })
           reader.readAsText(file)

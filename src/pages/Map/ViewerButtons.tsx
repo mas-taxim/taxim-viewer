@@ -3,6 +3,7 @@ import React, { useState, useCallback, useRef } from "react"
 import { Slider } from "@mui/joy"
 import UploadIcon from "@mui/icons-material/Upload"
 import PlayArrowIcon from "@mui/icons-material/PlayArrow"
+import PauseIcon from "@mui/icons-material/Pause"
 
 import IconButton from "../../components/IconButton"
 import HorizontalContainer, {
@@ -67,11 +68,12 @@ const ViewerButtons = ({
   onClickUpload,
 }: ViewerButtonsProps): React.ReactElement => {
   const PlayControlButton = useCallback((): React.ReactElement => {
-    return (
+    return running ? (
+      <MenuButton title="일시정지" onClick={onClickPlay} icon={<PauseIcon />} />
+    ) : (
       <MenuButton
         title="재생"
-        loading={running}
-        disabled={running || !runable}
+        disabled={!runable}
         onClick={onClickPlay}
         icon={<PlayArrowIcon />}
       />
@@ -125,7 +127,7 @@ const ViewerButtons = ({
             min={0}
             max={800}
             step={1}
-            disabled={!running}
+            disabled={!runable || running}
             size="md"
             valueLabelDisplay="off"
             variant="solid"

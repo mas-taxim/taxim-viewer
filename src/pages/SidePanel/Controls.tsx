@@ -1,13 +1,9 @@
-import React, { useEffect, useState } from "react"
+import React from "react"
 
-import { Typography, Slider, Button, Stack } from "@mui/joy"
-
-import KeyboardArrowRight from "@mui/icons-material/KeyboardArrowRight"
-import UploadIcon from "@mui/icons-material/Upload"
+import { Typography, Slider, Stack } from "@mui/joy"
 
 import Card from "../../components/AsideCard"
 import { useControlState, ControlState } from "../../providers/ControlProvider"
-import { useStatusState, StatusState } from "../../providers/StatusProvider"
 
 const marks = [
   {
@@ -30,9 +26,6 @@ const marks = [
 
 const Controls = (): React.ReactElement => {
   const [controls, setControls] = useControlState()
-  const [ready, setReady] = useState<boolean>(false)
-
-  const { viewRunning: running } = controls as ControlState
 
   return (
     <>
@@ -71,26 +64,6 @@ const Controls = (): React.ReactElement => {
             }}
           />
         </Card>
-        <Button
-          variant="soft"
-          color="success"
-          loading={running}
-          disabled={!ready}
-          onClick={() => {
-            setControls((prev: ControlState) => ({
-              ...prev,
-              viewRunning: true,
-            }))
-          }}
-        >
-          Run
-          <KeyboardArrowRight
-            style={{
-              position: "absolute",
-              right: "0.5rem",
-            }}
-          />
-        </Button>
       </Stack>
     </>
   )
