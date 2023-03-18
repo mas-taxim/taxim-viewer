@@ -211,7 +211,8 @@ const Viewer = (): React.ReactElement => {
     setColors(nameKeyValueMap)
     setProgressMax(logs.length - 1)
     fitMapBound(positions)
-  }, [logs, fitMapBound])
+    displayTimeAt(0)
+  }, [logs, fitMapBound, displayTimeAt])
 
   const displayIcon = useCallback((iconType: number) => {
     const iconStyle = {
