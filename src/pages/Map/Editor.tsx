@@ -5,6 +5,7 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from "react"
 import Point from "../../components/Point"
 import EditorButtons from "./EditorButtons"
 import { useControlState, ControlState } from "../../providers/ControlProvider"
+import { jsonToBlob, saveFile } from "../../helpers/fileInteracts"
 
 import { CustomOverlayMap, useMap, Polyline } from "react-kakao-maps-sdk"
 
@@ -19,28 +20,13 @@ type EdgeType = {
   to: string
 }
 
-type MenuButtonProps = {
-  title: string
-  active?: boolean
-  icon: React.ReactElement
-  onClick: () => void
-}
-
-const saveFile = (filename: string, blob: Blob) => {
-  const a = document.createElement("a")
-  a.download = filename
-  a.href = URL.createObjectURL(blob)
-  a.dataset.downloadurl = ["text/json", a.download, a.href].join(":")
-  a.addEventListener("click", (e) => {
-    setTimeout(() => URL.revokeObjectURL(a.href), 30 * 1000)
-  })
-  a.click()
-}
-
-const exportJSON = (nodes: Array<NodeType>, edges: Array<EdgeType>): Blob => {
+const saveGraphFile = (
+  nodes: Array<NodeType>,
+  edges: Array<EdgeType>
+): void => {
   const keys: Array<string> = nodes.map(({ key }) => key)
   const keyToIndex = (key: string): number => keys.indexOf(key)
-  const obj = {
+  const transformed = {
     nodes: nodes.map(({ key, lat, lng }: NodeType) => ({
       id: keyToIndex(key),
       lat,
@@ -52,10 +38,8 @@ const exportJSON = (nodes: Array<NodeType>, edges: Array<EdgeType>): Blob => {
       to: keyToIndex(to),
     })),
   }
-  const blob: Blob = new Blob([JSON.stringify(obj, null, 2)], {
-    type: "application/json",
-  })
-  return blob
+  const filename = "graph-" + new Date().toISOString() + ".json"
+  saveFile(filename, jsonToBlob(transformed))
 }
 
 const Editor = (): React.ReactElement => {
@@ -63,8 +47,7 @@ const Editor = (): React.ReactElement => {
   const [nodes, setNodes] = useState<Array<NodeType>>([])
   const [edges, setEdges] = useState<Array<EdgeType>>([])
   const [level, setLevel] = useState<number>(1)
-  const [controls, setControls] = useControlState()
-  const [editMode, setEditMode] = useState<string>()
+  const [editMode, setEditMode] = useState<string>("add")
   const [selected, setSelected] = useState<Array<string>>([])
   const [cursorPos, setCursorPos] = useState<NodeType>()
 
@@ -126,10 +109,6 @@ const Editor = (): React.ReactElement => {
       return
     }
   }, [selected, getNode, setCursorPos])
-
-  useEffect(() => {
-    setEditMode((controls as ControlState).editMode)
-  }, [(controls as ControlState).editMode])
 
   const onMapClick = useCallback(
     (evt: any) => {
@@ -337,10 +316,10 @@ const Editor = (): React.ReactElement => {
     [setNodes, setEdges]
   )
 
-  const downloadGraphToFile = useCallback(() => {
-    const filename = "graph-" + new Date().toISOString() + ".json"
-    saveFile(filename, exportJSON(nodes, edges))
-  }, [nodes, edges])
+  const downloadGraphToFile = useCallback(
+    () => saveGraphFile(nodes, edges),
+    [nodes, edges]
+  )
 
   return (
     <>

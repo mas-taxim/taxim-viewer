@@ -9,18 +9,12 @@ export interface ControlState {
   mode: "view" | "edit"
   viewSpeed?: number
   viewRunning?: boolean
-  editMode: "add" | "link"
-  editUpload?: (evt: any) => void
-  editDownload?: () => void
 }
 
 const initialState: ControlState = {
   mode: "view",
   viewSpeed: 1.0,
   viewRunning: false,
-  editMode: "add",
-  editUpload: (e: any) => window.alert("Not implemented"),
-  editDownload: () => window.alert("Not implemented"),
 }
 
 const Context: any = createContext<ContextState<ControlState> | undefined>(

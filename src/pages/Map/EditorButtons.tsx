@@ -1,5 +1,3 @@
-/* global kakao */
-
 import React, { useCallback, useRef } from "react"
 
 import GrainIcon from "@mui/icons-material/Grain"
