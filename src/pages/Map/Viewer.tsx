@@ -8,6 +8,7 @@ import { CustomOverlayMap, useMap } from "react-kakao-maps-sdk"
 
 import { useControlState, ControlState } from "../../providers/ControlProvider"
 import { useStatusState, StatusState } from "../../providers/StatusProvider"
+import ViewerButtons from "./ViewerButtons"
 
 const MarkerType = {
   NONE: -1,
@@ -38,6 +39,12 @@ const Viewer = (): React.ReactElement => {
   const [controls, setControls] = useControlState()
   const [status, setStatus] = useStatusState()
   const [level, setLevel] = useState<number>(1)
+  const [runable, setRunable] = useState<boolean>(false)
+
+  useEffect(() => {
+    const { logs } = status as StatusState
+    setRunable(logs && logs.length > 0)
+  }, [status])
 
   const map = useMap()
 
@@ -174,6 +181,35 @@ const Viewer = (): React.ReactElement => {
           </CustomOverlayMap>
         )
       )}
+      <ViewerButtons
+        running={false}
+        runable={runable}
+        onClickPlay={() => {
+          console.log("play")
+          return false
+        }}
+        onClickUpload={(evt: React.ChangeEvent<HTMLInputElement>) => {
+          const files = evt.target.files
+          if (!files || files.length < 1) {
+            setRunable(false)
+            return
+          }
+          const file = files[0]
+          const reader: FileReader = new FileReader()
+          reader.addEventListener("load", (event: any) => {
+            const result = event.target.result
+            try {
+              const { logs } = JSON.parse(result)
+              setStatus((prev) => ({ ...prev, logs }))
+              setRunable(true)
+            } catch {
+              window.alert("Wrong JSON file format")
+              setRunable(false)
+            }
+          })
+          reader.readAsText(file)
+        }}
+      />
     </>
   )
 }
