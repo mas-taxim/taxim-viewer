@@ -40,6 +40,10 @@ const Viewer = (): React.ReactElement => {
   const [runable, setRunable] = useState<boolean>(false)
   const [running, setRunning] = useState<boolean>(false)
 
+  const [progressMax, setProgressMax] = useState<number>(0)
+  const [progressCurrent, setProgressCurrent] = useState<number>(0)
+  const [allColors, setColors] = useState<ColorName>({})
+
   useEffect(() => {
     const { logs } = status as StatusState
     setRunable(logs && logs.length > 0)
@@ -54,6 +58,62 @@ const Viewer = (): React.ReactElement => {
   const { logs } = status as StatusState
   const speed = 8.0
 
+  const displayTimeAt = useCallback(
+    (t: number) => {
+      if (!logs || t >= logs.length) return
+
+      const { time, vehicles, tasks } = logs[t]
+
+      const _vehicles = Array.from(vehicles || [])
+      const _tasks = Array.from(tasks || [])
+
+      _vehicles.forEach(({ name }: any) => {
+        if (!(name in allColors)) {
+          allColors[name] = randomColor()
+        }
+      })
+      _tasks.forEach(({ id }: any) => {
+        const name = `task-${id}`
+        if (!(name in allColors)) {
+          allColors[name] = randomColor()
+        }
+      })
+
+      const vMarkers = _vehicles.map(({ name, lat, lng }: any) => ({
+        key: name,
+        color: allColors[name],
+        size: 5,
+        lat,
+        lng,
+        type: MarkerType.VEHICLE,
+      }))
+
+      const tMarkers = _tasks
+        .map(({ id, pick_lat, pick_lng, drop_lat, drop_lng }: any) => [
+          {
+            key: `task-${id}-pick`,
+            color: allColors[`task-${id}`],
+            size: 4,
+            lat: pick_lat,
+            lng: pick_lng,
+            type: MarkerType.PERSON_PICK,
+          },
+          {
+            key: `task-${id}-drop`,
+            color: allColors[`task-${id}`],
+            size: 4,
+            lat: drop_lat,
+            lng: drop_lng,
+            type: MarkerType.PERSON_DROP,
+          },
+        ])
+        .flat()
+
+      setMarkerPositions([...vMarkers, ...tMarkers])
+    },
+    [logs]
+  )
+
   useEffect(() => {
     // 1 frame contains 60 secs
     const DEFAULT_TIMESTEP = 60 * 1000
@@ -65,77 +125,67 @@ const Viewer = (): React.ReactElement => {
 
     const finish = () => setRunning(false)
 
-    const logsOnPlay: Array<any> = [...logs]
-
     let timer: any = null
     ;(async () => {
-      if (!logsOnPlay) return
+      if (!logs) return
 
       let index = 0
-      const colors: ColorName = {}
 
       timer = setInterval(() => {
-        if (index >= logsOnPlay.length) {
+        if (index >= logs.length) {
           finish()
           return
         }
-        const { time, vehicles, tasks } = logsOnPlay[index]
-        setStatus((prev) => ({ ...prev, currentTime: time }))
+        setStatus((prev) => ({ ...prev, currentTime: index }))
+        setProgressCurrent(index)
+        displayTimeAt(index)
         index += 1
-
-        const _vehicles = Array.from(vehicles || [])
-        const _tasks = Array.from(tasks || [])
-
-        _vehicles.forEach(({ name }: any) => {
-          if (!(name in colors)) {
-            colors[name] = randomColor()
-          }
-        })
-        _tasks.forEach(({ id }: any) => {
-          const name = `task-${id}`
-          if (!(name in colors)) {
-            colors[name] = randomColor()
-          }
-        })
-
-        const vMarkers = _vehicles.map(({ name, lat, lng }: any) => ({
-          key: name,
-          color: colors[name],
-          size: 5,
-          lat,
-          lng,
-          type: MarkerType.VEHICLE,
-        }))
-
-        const tMarkers = _tasks
-          .map(({ id, pick_lat, pick_lng, drop_lat, drop_lng }: any) => [
-            {
-              key: `task-${id}-pick`,
-              color: colors[`task-${id}`],
-              size: 4,
-              lat: pick_lat,
-              lng: pick_lng,
-              type: MarkerType.PERSON_PICK,
-            },
-            {
-              key: `task-${id}-drop`,
-              color: colors[`task-${id}`],
-              size: 4,
-              lat: drop_lat,
-              lng: drop_lng,
-              type: MarkerType.PERSON_DROP,
-            },
-          ])
-          .flat()
-
-        setMarkerPositions([...vMarkers, ...tMarkers])
       }, interval)
     })()
     return () => {
       clearInterval(timer)
       finish()
     }
-  }, [running])
+  }, [logs, running])
+
+  useEffect(() => {
+    displayTimeAt(progressCurrent)
+  }, [progressCurrent])
+
+  useEffect(() => {
+    if (!logs) return
+
+    // collect and create pairs of name and color
+    const nameKeyValueMap: ColorName = [
+      ...Array.from(
+        new Set<string>(
+          logs
+            .map(({ vehicles, tasks }: any) =>
+              vehicles
+                .map(({ name }: any) => `${name}`)
+                .concat(tasks.map(({ id }: any) => `${id}`))
+            )
+            .flat()
+        )
+      ),
+    ]
+      .map((name: string) => ({
+        [name]: randomColor(),
+      }))
+      .reduce(
+        (
+          previousValue: { [x: string]: string },
+          currentValue: { [x: string]: string }
+        ) => ({
+          ...previousValue,
+          ...currentValue,
+        }),
+        {}
+      )
+
+    setColors(nameKeyValueMap)
+    setProgressMax(logs.length - 1)
+  }, [logs])
 
   const displayIcon = useCallback((iconType: number) => {
     const iconStyle = {
@@ -179,6 +229,9 @@ const Viewer = (): React.ReactElement => {
       <ViewerButtons
         running={running}
         runable={runable}
+        progressMax={progressMax}
+        progressCurrent={progressCurrent}
+        onProgressUpdated={setProgressCurrent}
         onClickPlay={() => setRunning(!running)}
         onClickUpload={(evt: React.ChangeEvent<HTMLInputElement>) => {
           const files = evt.target.files

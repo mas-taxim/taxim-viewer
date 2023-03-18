@@ -57,6 +57,9 @@ const SliderWrapperStyled = styled.div`
 type ViewerButtonsProps = {
   running: boolean
   runable: boolean
+  progressMax: number
+  progressCurrent: number
+  onProgressUpdated: (progress: number) => void
   onClickPlay: () => void
   onClickUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
 }
@@ -64,6 +67,9 @@ type ViewerButtonsProps = {
 const ViewerButtons = ({
   running,
   runable,
+  progressMax,
+  progressCurrent,
+  onProgressUpdated,
   onClickPlay,
   onClickUpload,
 }: ViewerButtonsProps): React.ReactElement => {
@@ -124,18 +130,24 @@ const ViewerButtons = ({
             color="primary"
             aria-label="Timestamp"
             defaultValue={0}
+            value={progressCurrent}
             min={0}
-            max={800}
+            max={progressMax}
             step={1}
             disabled={!runable || running}
             size="md"
             valueLabelDisplay="off"
             variant="solid"
-            onChangeCommitted={(
+            onChange={(
               event: React.SyntheticEvent | Event,
               value: number | number[]
             ) => {
               console.log("new value", value)
+              if (typeof value === "number") {
+                onProgressUpdated(value)
+              } else {
+                onProgressUpdated(value[0])
+              }
             }}
             style={{
               width: "calc(100% - 0.5rem)",
