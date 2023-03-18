@@ -46,9 +46,16 @@ const MenuButton = ({
   )
 }
 
-const PlaySpeedButton = (): React.ReactElement => {
+type SpeedControlProps = {
+  speed: number
+  onSelectSpeed: (speed: number) => void
+}
+
+const PlaySpeedButton = ({
+  speed,
+  onSelectSpeed,
+}: SpeedControlProps): React.ReactElement => {
   const [anchorEl, setAnchorEl] = React.useState(null)
-  const [speed, setSpeed] = React.useState<string>("1.0")
   const isOpen = Boolean(anchorEl)
   const handleClick = (event: React.SyntheticEvent<any>) => {
     setAnchorEl(event.currentTarget)
@@ -56,18 +63,21 @@ const PlaySpeedButton = (): React.ReactElement => {
   const close = () => {
     setAnchorEl(null)
   }
-  const select = (item: string) => {
-    setSpeed(item)
+  const select = (item: number) => {
+    onSelectSpeed(item)
     close()
   }
 
-  const Item = (item: string): React.ReactElement => (
-    <MenuItem
-      {...(speed === item && { selected: true, variant: "soft" })}
-      onClick={() => select(item)}
-    >
-      x{item}
-    </MenuItem>
+  const Item = useCallback(
+    (item: number): React.ReactElement => (
+      <MenuItem
+        {...(speed === item && { selected: true, variant: "soft" })}
+        onClick={() => select(item)}
+      >
+        x{item.toFixed(1)}
+      </MenuItem>
+    ),
+    [speed]
   )
 
   return (
@@ -85,10 +95,10 @@ const PlaySpeedButton = (): React.ReactElement => {
         size="sm"
         variant="plain"
       >
-        {Item("1.0")}
-        {Item("2.0")}
-        {Item("5.0")}
-        {Item("10.0")}
+        {Item(1.0)}
+        {Item(2.0)}
+        {Item(5.0)}
+        {Item(10.0)}
       </Menu>
     </div>
   )
@@ -111,13 +121,15 @@ type ViewerButtonsProps = {
   onProgressUpdated: (progress: number) => void
   onClickPlay: () => void
   onClickUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
-}
+} & SpeedControlProps
 
 const ViewerButtons = ({
   running,
   runable,
   progressMax,
   progressCurrent,
+  speed,
+  onSelectSpeed,
   onProgressUpdated,
   onClickPlay,
   onClickUpload,
@@ -173,7 +185,7 @@ const ViewerButtons = ({
       <HorizontalContainer position="bottom">
         <UploadButton />
         <PlayControlButton />
-        <PlaySpeedButton />
+        <PlaySpeedButton speed={speed} onSelectSpeed={onSelectSpeed} />
         <Divider />
         <SliderWrapperStyled>
           <Slider

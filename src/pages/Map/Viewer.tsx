@@ -49,7 +49,7 @@ const Viewer = (): React.ReactElement => {
   const [level, setLevel] = useState<number>(3)
   const [runable, setRunable] = useState<boolean>(false)
   const [running, setRunning] = useState<boolean>(false)
-
+  const [speed, setSpeed] = useState<number>(1.0)
   const [progressMax, setProgressMax] = useState<number>(0)
   const [progressCurrent, setProgressCurrent] = useState<number>(0)
   const [allColors, setColors] = useState<ColorName>({})
@@ -75,12 +75,12 @@ const Viewer = (): React.ReactElement => {
 
       const vMarkers: Array<MarkerPosition> = Array.from(vehicles || []).map(
         ({ name, lat, lng }: any) => ({
-        key: name,
-        color: allColors[name],
-        size: 5,
-        lat,
-        lng,
-        type: MarkerType.VEHICLE,
+          key: name,
+          color: allColors[name],
+          size: 5,
+          lat,
+          lng,
+          type: MarkerType.VEHICLE,
         })
       )
 
@@ -96,22 +96,22 @@ const Viewer = (): React.ReactElement => {
           }: any): any[] => [
             0 <= status && status <= 5
               ? {
-            key: `task-${id}-pick`,
-            color: allColors[`task-${id}`],
-            size: 4,
-            lat: pick_lat,
-            lng: pick_lng,
-            type: MarkerType.PERSON_PICK,
+                  key: `task-${id}-pick`,
+                  color: allColors[`task-${id}`],
+                  size: 4,
+                  lat: pick_lat,
+                  lng: pick_lng,
+                  type: MarkerType.PERSON_PICK,
                 }
               : null,
-          {
-            key: `task-${id}-drop`,
-            color: allColors[`task-${id}`],
-            size: 4,
-            lat: drop_lat,
-            lng: drop_lng,
-            type: MarkerType.PERSON_DROP,
-          },
+            {
+              key: `task-${id}-drop`,
+              color: allColors[`task-${id}`],
+              size: 4,
+              lat: drop_lat,
+              lng: drop_lng,
+              type: MarkerType.PERSON_DROP,
+            },
           ]
         )
         .flat()
@@ -123,42 +123,26 @@ const Viewer = (): React.ReactElement => {
   )
 
   useEffect(() => {
+    displayTimeAt(progressCurrent)
+  }, [progressCurrent])
+
+  useEffect(() => {
+    if (!running) return
+
     // 1 frame contains 60 secs
     const DEFAULT_TIMESTEP = 60 * 1000
     // 1 frame / 1000 ms
     const interval = DEFAULT_TIMESTEP / 60 / (speed || 1.0)
     console.log("info", interval, running, speed)
 
-    if (!running) return
+    const timer = setTimeout(() => {
+      setProgressCurrent((prev) => prev + 1)
+    }, interval)
 
-    const finish = () => setRunning(false)
-
-    let timer: any = null
-    ;(async () => {
-      if (!logs) return
-
-      let index = 0
-
-      timer = setInterval(() => {
-        if (index >= logs.length) {
-          finish()
-          return
-        }
-        setStatus((prev) => ({ ...prev, currentTime: index }))
-        setProgressCurrent(index)
-        displayTimeAt(index)
-        index += 1
-      }, interval)
-    })()
     return () => {
-      clearInterval(timer)
-      finish()
+      clearTimeout(timer)
     }
-  }, [logs, running])
-
-  useEffect(() => {
-    displayTimeAt(progressCurrent)
-  }, [progressCurrent])
+  }, [running, speed, progressCurrent])
 
   useEffect(() => {
     if (!logs) return
@@ -212,6 +196,25 @@ const Viewer = (): React.ReactElement => {
     }
   }, [])
 
+  const loadLogFromFile = (evt: React.ChangeEvent<HTMLInputElement>) => {
+    const files = evt.target.files
+    if (!files || files.length < 1) {
+      return
+    }
+    const file = files[0]
+    const reader: FileReader = new FileReader()
+    reader.addEventListener("load", (event: any) => {
+      const result = event.target.result
+      try {
+        const { logs } = JSON.parse(result)
+        setStatus((prev) => ({ ...prev, logs }))
+      } catch {
+        window.alert("Wrong JSON file format")
+      }
+    })
+    reader.readAsText(file)
+  }
+
   return (
     <>
       {markerPositions.map(
@@ -239,26 +242,11 @@ const Viewer = (): React.ReactElement => {
         runable={runable}
         progressMax={progressMax}
         progressCurrent={progressCurrent}
+        speed={speed}
+        onSelectSpeed={setSpeed}
         onProgressUpdated={setProgressCurrent}
         onClickPlay={() => setRunning(!running)}
-        onClickUpload={(evt: React.ChangeEvent<HTMLInputElement>) => {
-          const files = evt.target.files
-          if (!files || files.length < 1) {
-            return
-          }
-          const file = files[0]
-          const reader: FileReader = new FileReader()
-          reader.addEventListener("load", (event: any) => {
-            const result = event.target.result
-            try {
-              const { logs } = JSON.parse(result)
-              setStatus((prev) => ({ ...prev, logs }))
-            } catch {
-              window.alert("Wrong JSON file format")
-            }
-          })
-          reader.readAsText(file)
-        }}
+        onClickUpload={loadLogFromFile}
       />
     </>
   )
