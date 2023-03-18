@@ -2,17 +2,8 @@
 
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react"
 
-import GrainIcon from "@mui/icons-material/Grain"
-import PolylineIcon from "@mui/icons-material/Polyline"
-import OpenWithIcon from "@mui/icons-material/OpenWith"
-import UploadIcon from "@mui/icons-material/Upload"
-import DownloadIcon from "@mui/icons-material/Download"
-
 import Point from "../../components/Point"
-import IconButton from "../../components/IconButton"
-import HorizontalContainer, {
-  Divider,
-} from "../../components/HorizontalContainer"
+import EditorButtons from "./EditorButtons"
 import { useControlState, ControlState } from "../../providers/ControlProvider"
 
 import { CustomOverlayMap, useMap, Polyline } from "react-kakao-maps-sdk"
@@ -35,27 +26,6 @@ type MenuButtonProps = {
   onClick: () => void
 }
 
-const MenuButton = ({
-  title,
-  active = false,
-  icon,
-  onClick,
-}: MenuButtonProps) => {
-  return (
-    <IconButton
-      tooltip={title}
-      tooltipColor="primary"
-      tooltipPlacement="top"
-      active={active}
-      variant="outlined"
-      size={"32px"}
-      onClick={onClick}
-    >
-      {icon}
-    </IconButton>
-  )
-}
-
 const saveFile = (filename: string, blob: Blob) => {
   const a = document.createElement("a")
   a.download = filename
@@ -65,6 +35,27 @@ const saveFile = (filename: string, blob: Blob) => {
     setTimeout(() => URL.revokeObjectURL(a.href), 30 * 1000)
   })
   a.click()
+}
+
+const exportJSON = (nodes: Array<NodeType>, edges: Array<EdgeType>): Blob => {
+  const keys: Array<string> = nodes.map(({ key }) => key)
+  const keyToIndex = (key: string): number => keys.indexOf(key)
+  const obj = {
+    nodes: nodes.map(({ key, lat, lng }: NodeType) => ({
+      id: keyToIndex(key),
+      lat,
+      lng,
+      info: {},
+    })),
+    edges: edges.map(({ from, to }: EdgeType) => ({
+      from: keyToIndex(from),
+      to: keyToIndex(to),
+    })),
+  }
+  const blob: Blob = new Blob([JSON.stringify(obj, null, 2)], {
+    type: "application/json",
+  })
+  return blob
 }
 
 const Editor = (): React.ReactElement => {
@@ -121,78 +112,6 @@ const Editor = (): React.ReactElement => {
       prev.filter(({ from, to }: EdgeType) => hasNode(from) && hasNode(to))
     )
   }, [hasNode, setEdges])
-
-  const exportJSON = useCallback((): Blob => {
-    const keys: Array<string> = nodes.map(({ key }) => key)
-    const keyToIndex = (key: string): number => keys.indexOf(key)
-    const obj = {
-      nodes: nodes.map(({ key, lat, lng }: NodeType) => ({
-        id: keyToIndex(key),
-        lat,
-        lng,
-        info: {},
-      })),
-      edges: edges.map(({ from, to }: EdgeType) => ({
-        from: keyToIndex(from),
-        to: keyToIndex(to),
-      })),
-    }
-    const blob: Blob = new Blob([JSON.stringify(obj, null, 2)], {
-      type: "application/json",
-    })
-    return blob
-  }, [nodes, edges])
-
-  useEffect(() => {
-    // redeclare upload callback
-    setControls((prev) => ({
-      ...prev,
-      editUpload: (evt: any) => {
-        const files = evt.target.files
-        if (!files || files.length < 1) {
-          return
-        }
-        const file = files[0]
-        const reader: FileReader = new FileReader()
-        reader.addEventListener("load", (event: any) => {
-          const result = event.target.result
-          try {
-            const { nodes, edges } = JSON.parse(result)
-            const newNodes: Array<NodeType> = nodes.map(
-              ({ id, lat, lng }: any) =>
-                ({
-                  key: `node-${id}`,
-                  lat,
-                  lng,
-                } as NodeType)
-            )
-            setNodes(newNodes)
-            setEdges(
-              edges.map(
-                ({ from, to }: any) =>
-                  ({
-                    from: (newNodes[from] as NodeType).key,
-                    to: (newNodes[to] as NodeType).key,
-                  } as EdgeType)
-              )
-            )
-            console.log(nodes, edges)
-          } catch {
-            window.alert("Failed to parse JSON")
-          }
-        })
-        reader.readAsText(file)
-      },
-    }))
-    // redeclare download callback
-    setControls((prev) => ({
-      ...prev,
-      editDownload: () => {
-        const filename = "graph-" + new Date().toISOString() + ".json"
-        saveFile(filename, exportJSON())
-      },
-    }))
-  }, [exportJSON])
 
   useEffect(() => {
     console.log("selected", selected)
@@ -321,83 +240,6 @@ const Editor = (): React.ReactElement => {
     [editMode, selectedNode, cursorPos]
   )
 
-  const onSelectMode = (editMode: string) => {
-    setEditMode(editMode)
-  }
-
-  const ModeButtons = useCallback((): React.ReactElement => {
-    return (
-      <>
-        <MenuButton
-          title="점 추가/삭제"
-          active={editMode === "add"}
-          icon={<GrainIcon />}
-          onClick={() => onSelectMode("add")}
-        />
-        <MenuButton
-          title="점 연결"
-          active={editMode === "link"}
-          icon={<PolylineIcon />}
-          onClick={() => onSelectMode("link")}
-        />
-        <MenuButton
-          title="점 이동"
-          active={editMode === "move"}
-          icon={<OpenWithIcon />}
-          onClick={() => onSelectMode("move")}
-        />
-      </>
-    )
-  }, [editMode])
-
-  const UploadButton = useCallback((): React.ReactElement => {
-    const ref = useRef<HTMLInputElement>(null)
-    return (
-      <>
-        <label
-          htmlFor="upload-log"
-          style={{
-            width: "100%",
-          }}
-        >
-          <input
-            ref={ref}
-            style={{ display: "none" }}
-            id="upload-log"
-            name="upload-log"
-            type="file"
-            accept=".json,application/json"
-            onChange={controls.editUpload}
-          />
-          <MenuButton
-            title="업로드"
-            icon={<UploadIcon />}
-            onClick={() => {
-              if (ref.current) {
-                ref.current.click()
-              }
-            }}
-          />
-        </label>
-      </>
-    )
-  }, [controls])
-
-  const DownloadButton = useCallback(
-    (): React.ReactElement => (
-      <MenuButton
-        title="다운로드"
-        icon={<DownloadIcon />}
-        onClick={() => {
-          if (controls.editDownload) {
-            controls.editDownload()
-          }
-        }}
-      />
-    ),
-    [controls]
-  )
-
   const NodePoints = useCallback(
     (): React.ReactElement => (
       <>
@@ -455,17 +297,62 @@ const Editor = (): React.ReactElement => {
     [edges, getNode]
   )
 
+  const loadGraphFromFile = useCallback(
+    (evt: React.ChangeEvent<HTMLInputElement>) => {
+      const files = evt.target.files
+      if (!files || files.length < 1) {
+        return
+      }
+      const file = files[0]
+      const reader: FileReader = new FileReader()
+      reader.addEventListener("load", (event: any) => {
+        const result = event.target.result
+        try {
+          const { nodes, edges } = JSON.parse(result)
+          const newNodes: Array<NodeType> = nodes.map(
+            ({ id, lat, lng }: any) =>
+              ({
+                key: `node-${id}`,
+                lat,
+                lng,
+              } as NodeType)
+          )
+          setNodes(newNodes)
+          setEdges(
+            edges.map(
+              ({ from, to }: any) =>
+                ({
+                  from: (newNodes[from] as NodeType).key,
+                  to: (newNodes[to] as NodeType).key,
+                } as EdgeType)
+            )
+          )
+          console.log(nodes, edges)
+        } catch {
+          window.alert("Failed to parse JSON")
+        }
+      })
+      reader.readAsText(file)
+    },
+    [setNodes, setEdges]
+  )
+
+  const downloadGraphToFile = useCallback(() => {
+    const filename = "graph-" + new Date().toISOString() + ".json"
+    saveFile(filename, exportJSON(nodes, edges))
+  }, [nodes, edges])
+
   return (
     <>
       <EdgeLines />
       <GuideLine />
       <NodePoints />
-      <HorizontalContainer position="bottom">
-        <ModeButtons />
-        <Divider />
-        <UploadButton />
-        <DownloadButton />
-      </HorizontalContainer>
+      <EditorButtons
+        editMode={editMode || "add"}
+        onClickDownload={downloadGraphToFile}
+        onClickUpload={loadGraphFromFile}
+        onModeChanged={setEditMode}
+      />
     </>
   )
 }
