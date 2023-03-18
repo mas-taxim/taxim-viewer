@@ -32,7 +32,7 @@ type IconButtonProps = React.PropsWithChildren & {
   loading?: boolean
   variant?: "plain" | "outlined" | "soft" | "solid"
   size: string
-  onClick: () => void
+  onClick: (event: React.MouseEvent<HTMLElement>) => void
 }
 
 const IconButton = ({

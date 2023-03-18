@@ -1,23 +1,24 @@
 import React, { useState, useCallback, useRef } from "react"
 
-import { Slider } from "@mui/joy"
+import { Slider, Menu, MenuItem } from "@mui/joy"
 import UploadIcon from "@mui/icons-material/Upload"
 import PlayArrowIcon from "@mui/icons-material/PlayArrow"
 import PauseIcon from "@mui/icons-material/Pause"
 
 import IconButton from "../../components/IconButton"
+import SlowMotionVideoIcon from "@mui/icons-material/SlowMotionVideo"
 import HorizontalContainer, {
   Divider,
 } from "../../components/HorizontalContainer"
 import styled from "styled-components"
 
 type MenuButtonProps = {
-  title: string
+  title?: string
   active?: boolean
   disabled?: boolean
   loading?: boolean
   icon: React.ReactElement
-  onClick: () => void
+  onClick: (event: React.MouseEvent<HTMLElement>) => void
 }
 
 const MenuButton = ({
@@ -42,6 +43,54 @@ const MenuButton = ({
     >
       {icon}
     </IconButton>
+  )
+}
+
+const PlaySpeedButton = (): React.ReactElement => {
+  const [anchorEl, setAnchorEl] = React.useState(null)
+  const [speed, setSpeed] = React.useState<string>("1.0")
+  const isOpen = Boolean(anchorEl)
+  const handleClick = (event: React.SyntheticEvent<any>) => {
+    setAnchorEl(event.currentTarget)
+  }
+  const close = () => {
+    setAnchorEl(null)
+  }
+  const select = (item: string) => {
+    setSpeed(item)
+    close()
+  }
+
+  const Item = (item: string): React.ReactElement => (
+    <MenuItem
+      {...(speed === item && { selected: true, variant: "soft" })}
+      onClick={() => select(item)}
+    >
+      x{item}
+    </MenuItem>
+  )
+
+  return (
+    <div>
+      <MenuButton
+        title={isOpen ? undefined : "재생 속도"}
+        onClick={handleClick}
+        icon={<SlowMotionVideoIcon />}
+      />
+      <Menu
+        anchorEl={anchorEl}
+        open={isOpen}
+        onClose={close}
+        color="primary"
+        size="sm"
+        variant="plain"
+      >
+        {Item("1.0")}
+        {Item("2.0")}
+        {Item("5.0")}
+        {Item("10.0")}
+      </Menu>
+    </div>
   )
 }
 
@@ -124,6 +173,7 @@ const ViewerButtons = ({
       <HorizontalContainer position="bottom">
         <UploadButton />
         <PlayControlButton />
+        <PlaySpeedButton />
         <Divider />
         <SliderWrapperStyled>
           <Slider
