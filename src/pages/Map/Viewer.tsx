@@ -31,6 +31,16 @@ interface ColorName {
 
 const randomColor = () => "#" + Math.random().toString(16).slice(-6)
 
+type TaskType = {
+  id: number
+  drop_lat: number
+  drop_lng: number
+  pick_lat: number
+  pick_lng: number
+  status: number
+  time: number
+}
+
 const Viewer = (): React.ReactElement => {
   const [markerPositions, setMarkerPositions] = useState<Array<MarkerPosition>>(
     []
@@ -56,7 +66,6 @@ const Viewer = (): React.ReactElement => {
   }, [map])
 
   const { logs } = status as StatusState
-  const speed = 8.0
 
   const displayTimeAt = useCallback(
     (t: number) => {
@@ -64,40 +73,37 @@ const Viewer = (): React.ReactElement => {
 
       const { time, vehicles, tasks } = logs[t]
 
-      const _vehicles = Array.from(vehicles || [])
-      const _tasks = Array.from(tasks || [])
-
-      _vehicles.forEach(({ name }: any) => {
-        if (!(name in allColors)) {
-          allColors[name] = randomColor()
-        }
-      })
-      _tasks.forEach(({ id }: any) => {
-        const name = `task-${id}`
-        if (!(name in allColors)) {
-          allColors[name] = randomColor()
-        }
-      })
-
-      const vMarkers = _vehicles.map(({ name, lat, lng }: any) => ({
+      const vMarkers: Array<MarkerPosition> = Array.from(vehicles || []).map(
+        ({ name, lat, lng }: any) => ({
         key: name,
         color: allColors[name],
         size: 5,
         lat,
         lng,
         type: MarkerType.VEHICLE,
-      }))
+        })
+      )
 
-      const tMarkers = _tasks
-        .map(({ id, pick_lat, pick_lng, drop_lat, drop_lng }: any) => [
-          {
+      const tMarkers: Array<MarkerPosition> = Array.from(tasks || [])
+        .map(
+          ({
+            id,
+            pick_lat,
+            pick_lng,
+            drop_lat,
+            drop_lng,
+            status,
+          }: any): any[] => [
+            0 <= status && status <= 5
+              ? {
             key: `task-${id}-pick`,
             color: allColors[`task-${id}`],
             size: 4,
             lat: pick_lat,
             lng: pick_lng,
             type: MarkerType.PERSON_PICK,
-          },
+                }
+              : null,
           {
             key: `task-${id}-drop`,
             color: allColors[`task-${id}`],
@@ -106,8 +112,10 @@ const Viewer = (): React.ReactElement => {
             lng: drop_lng,
             type: MarkerType.PERSON_DROP,
           },
-        ])
+          ]
+        )
         .flat()
+        .filter((value) => value !== null)
 
       setMarkerPositions([...vMarkers, ...tMarkers])
     },
