@@ -2,6 +2,7 @@ import React, { useCallback } from "react"
 
 import MuiIconButton from "@mui/joy/IconButton"
 import MuiTooltip from "@mui/joy/Tooltip"
+import CircularProgress from "@mui/joy/CircularProgress"
 
 type IconButtonProps = React.PropsWithChildren & {
   tooltip?: React.ReactNode
@@ -27,6 +28,8 @@ type IconButtonProps = React.PropsWithChildren & {
     | "top-start"
   tooltipSize?: "sm" | "md" | "lg"
   active: boolean
+  disabled?: boolean
+  loading?: boolean
   variant?: "plain" | "outlined" | "soft" | "solid"
   size: string
   onClick: () => void
@@ -38,6 +41,8 @@ const IconButton = ({
   tooltipPlacement = "bottom",
   tooltipSize = "sm",
   active,
+  disabled = false,
+  loading = false,
   variant = "plain",
   size,
   onClick,
@@ -57,9 +62,19 @@ const IconButton = ({
         sx={{
           "--IconButton-size": size,
         }}
+        disabled={disabled}
         onClick={onClick}
       >
-        {children}
+        {loading ? (
+          <CircularProgress
+            color="primary"
+            size="sm"
+            value={33}
+            variant="plain"
+          />
+        ) : (
+          children
+        )}
       </MuiIconButton>
     </MuiTooltip>
   )
