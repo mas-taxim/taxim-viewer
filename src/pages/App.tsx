@@ -3,7 +3,6 @@ import Map from "./Map"
 import Aside from "../components/Aside"
 import { ControlProvider } from "../providers/ControlProvider"
 import { StatusProvider } from "../providers/StatusProvider"
-import SidePanel from "./SidePanel"
 
 function App() {
   return (
@@ -12,9 +11,7 @@ function App() {
         <ControlProvider>
           <Map />
           <div className="hud-overlay">
-            <Aside>
-              <SidePanel />
-            </Aside>
+            <Aside></Aside>
           </div>
         </ControlProvider>
       </StatusProvider>

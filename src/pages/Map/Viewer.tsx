@@ -7,7 +7,7 @@ import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrow
 import { CustomOverlayMap, useMap } from "react-kakao-maps-sdk"
 
 import { useStatusState, StatusState } from "../../providers/StatusProvider"
-import ViewerButtons from "./ViewerButtons"
+import ViewerButtons from "./Controls/ViewerButtons"
 
 const MarkerType = {
   NONE: -1,

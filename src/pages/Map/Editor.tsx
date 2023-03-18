@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react"
 
 import Point from "../../components/Point"
-import EditorButtons from "./EditorButtons"
+import EditorButtons from "./Controls/EditorButtons"
 import { useControlState, ControlState } from "../../providers/ControlProvider"
 import { jsonToBlob, saveFile } from "../../helpers/fileInteracts"
 

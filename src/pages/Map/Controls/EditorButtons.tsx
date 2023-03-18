@@ -6,10 +6,10 @@ import OpenWithIcon from "@mui/icons-material/OpenWith"
 import UploadIcon from "@mui/icons-material/Upload"
 import DownloadIcon from "@mui/icons-material/Download"
 
-import IconButton from "../../components/IconButton"
+import IconButton from "../../../components/IconButton"
 import HorizontalContainer, {
   Divider,
-} from "../../components/HorizontalContainer"
+} from "../../../components/HorizontalContainer"
 
 type MenuButtonProps = {
   title: string

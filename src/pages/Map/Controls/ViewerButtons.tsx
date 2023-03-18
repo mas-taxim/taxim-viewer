@@ -5,11 +5,11 @@ import UploadIcon from "@mui/icons-material/Upload"
 import PlayArrowIcon from "@mui/icons-material/PlayArrow"
 import PauseIcon from "@mui/icons-material/Pause"
 
-import IconButton from "../../components/IconButton"
+import IconButton from "../../../components/IconButton"
 import SlowMotionVideoIcon from "@mui/icons-material/SlowMotionVideo"
 import HorizontalContainer, {
   Divider,
-} from "../../components/HorizontalContainer"
+} from "../../../components/HorizontalContainer"
 import styled from "styled-components"
 
 type MenuButtonProps = {
