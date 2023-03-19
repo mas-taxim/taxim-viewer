@@ -462,11 +462,39 @@ const Viewer = (): React.ReactElement => {
   }, [logs, progressCurrent])
 
   const StateViewer = useCallback((): React.ReactElement => {
+    if (!subLogs || subLogs.length < 1) {
+      return (
+        <center
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: 0,
+            width: "100%",
+          }}
+        >
+          <Typography
+            color="neutral"
+            fontSize={2}
+            sx={{
+              translate: "0% -50%",
+              textAlign: "center",
+            }}
+          >
+            재생할 정보가 없습니다.
+          </Typography>
+        </center>
+      )
+    }
     return (
-      <>
+      <Stack spacing={1}>
         {subLogs.map(({ time, vehicles, tasks }) => (
           <div key={`log-${time}`}>
-            <Divider>
+            <Divider
+              sx={{
+                marginTop: "0.5rem",
+                marginBottom: "0.25rem",
+              }}
+            >
               <Typography color="neutral" fontSize={2}>
                 {humanizeDate(new Date(time))}
               </Typography>
@@ -479,7 +507,7 @@ const Viewer = (): React.ReactElement => {
             />
           </div>
         ))}
-      </>
+      </Stack>
     )
   }, [subLogs, allColors])
 
@@ -518,9 +546,7 @@ const Viewer = (): React.ReactElement => {
       />
 
       <Aside ref={sidePanelRef}>
-        <Stack spacing={1}>
-          <StateViewer />
-        </Stack>
+        <StateViewer />
       </Aside>
     </>
   )

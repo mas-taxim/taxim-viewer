@@ -53,7 +53,7 @@ const FoldButtonStyled = styled.div`
   width: 100%;
   height: 3em;
   display: flex;
-  padding-right: 0.25em;
+  padding: 0 2px;
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
@@ -79,12 +79,13 @@ const Container = ({
     const props = {
       sx: {
         width: "100%",
+        fontSize: "1rem",
       },
     }
     return fold ? (
-      <KeyboardDoubleArrowRightIcon />
+      <KeyboardDoubleArrowRightIcon {...props} />
     ) : (
-      <KeyboardDoubleArrowLeftIcon />
+      <KeyboardDoubleArrowLeftIcon {...props} />
     )
   }, [fold])
   return (
