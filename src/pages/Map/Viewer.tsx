@@ -1,6 +1,12 @@
 /* global kakao */
 
-import React, { useEffect, useState, useCallback, useRef } from "react"
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  CSSProperties,
+} from "react"
 
 import Dot from "../../components/Dot"
 import Aside from "../../components/Aside"
@@ -104,7 +110,7 @@ const Viewer = (): React.ReactElement => {
             0 <= status && status <= 5
               ? {
                   key: `task-${id}-pick`,
-                  color: allColors[`task-${id}`],
+                  color: allColors[id],
                   size: 4,
                   lat: pick_lat,
                   lng: pick_lng,
@@ -113,7 +119,7 @@ const Viewer = (): React.ReactElement => {
               : null,
             {
               key: `task-${id}-drop`,
-              color: allColors[`task-${id}`],
+              color: allColors[id],
               size: 4,
               lat: drop_lat,
               lng: drop_lng,
@@ -126,7 +132,7 @@ const Viewer = (): React.ReactElement => {
 
       setMarkerPositions([...vMarkers, ...tMarkers])
     },
-    [logs]
+    [logs, allColors]
   )
 
   useEffect(() => {
@@ -185,6 +191,14 @@ const Viewer = (): React.ReactElement => {
       )
       .flat()
 
+    setProgressMax(logs.length - 1)
+    fitMapBound(positions)
+    displayTimeAt(0)
+  }, [logs, fitMapBound, displayTimeAt])
+
+  useEffect(() => {
+    if (!logs || logs.length < 1) return
+
     // collect and create pairs of name and color
     const nameKeyValueMap: ColorName = [
       ...Array.from(
@@ -214,16 +228,14 @@ const Viewer = (): React.ReactElement => {
       )
 
     setColors(nameKeyValueMap)
-    setProgressMax(logs.length - 1)
-    fitMapBound(positions)
-    displayTimeAt(0)
-  }, [logs, fitMapBound, displayTimeAt])
+  }, [logs])
 
-  const displayIcon = useCallback((iconType: number) => {
+  const displayIcon = useCallback((iconType: number, style?: CSSProperties) => {
     const iconStyle = {
       fill: "white",
       marginTop: "-1px",
       width: "75%",
+      ...style,
     }
     if (iconType == MarkerType.NONE) {
       return <></>
@@ -260,8 +272,90 @@ const Viewer = (): React.ReactElement => {
   useEffect(() => {
     if (!sidePanelRef || !sidePanelRef.current) return
     const div: HTMLDivElement = sidePanelRef.current
-    div.scrollTo({ top: div.scrollHeight })
+    div.scrollTo({ top: div.scrollHeight, behavior: "smooth" })
   }, [sidePanelRef, progressCurrent])
+
+  const LogInfo = useCallback(
+    ({ time, vehicles, tasks }: any) => {
+      const Icon = ({ color, type, style }: any): React.ReactElement => (
+        <div
+          style={{
+            backgroundColor: color || "black",
+            display: "flex",
+            justifyItems: "center",
+            alignItems: "center",
+            width: "32px",
+            height: "32px",
+            borderRadius: "6rem",
+            ...style,
+          }}
+        >
+          {displayIcon(type, {
+            margin: "0 auto",
+          })}
+        </div>
+      )
+      console.log("vvv", vehicles)
+      console.log(
+        "vvv1",
+        vehicles.filter(({ allocated_id }: any) => !!allocated_id)
+      )
+      console.log(
+        "vvv2",
+        vehicles.filter(({ allocated_id }: any) => allocated_id != null)
+      )
+      return (
+        <>
+          {vehicles
+            .filter(({ allocated_id }: any) => allocated_id != null)
+            .map(({ name, allocated_id }: any) => {
+              const task = Array.from(tasks || []).filter(
+                ({ id }: any) => id === allocated_id
+              )
+              if (task.length < 1) return null
+              const { id, pick_lat, pick_lng, drop_lat, drop_lng }: any =
+                task[0]
+              return (
+                <>
+                  <div
+                    className="pairs"
+                    key={`pair-of-${id}`}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr 1fr",
+                      padding: "0.5rem 0",
+                    }}
+                  >
+                    <Icon
+                      color={allColors[id]}
+                      type={MarkerType.PERSON_PICK}
+                      style={{
+                        justifySelf: "flex-start",
+                      }}
+                    />
+                    <Icon
+                      color={allColors[name]}
+                      type={MarkerType.VEHICLE}
+                      style={{
+                        justifySelf: "center",
+                      }}
+                    />
+                    <Icon
+                      color={allColors[id]}
+                      type={MarkerType.PERSON_DROP}
+                      style={{
+                        justifySelf: "flex-end",
+                      }}
+                    />
+                  </div>
+                </>
+              )
+            })}
+        </>
+      )
+    },
+    [displayIcon, allColors]
+  )
 
   const StateViewer = useCallback((): React.ReactElement => {
     if (!logs || logs.length < 1) {
@@ -283,6 +377,7 @@ const Viewer = (): React.ReactElement => {
                 {humanizeDate(new Date(time))}
               </Typography>
             </Divider>
+            <LogInfo time={time} vehicles={vehicles} tasks={tasks} />
           </div>
         ))}
       </>
