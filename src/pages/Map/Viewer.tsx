@@ -147,10 +147,13 @@ const Viewer = (): React.ReactElement => {
   const [progressMax, setProgressMax] = useState<number>(0)
   const [progressCurrent, setProgressCurrent] = useState<number>(0)
   const [allColors, setColors] = useState<ColorName>({})
+  const [logs, setLogs] = useState<Array<any>>([])
 
   useEffect(() => {
     const { logs } = status as StatusState
     setRunable(logs && logs.length > 0)
+    setLogs(logs)
+    setProgressCurrent(0)
   }, [status])
 
   const map = useMap()
@@ -158,8 +161,6 @@ const Viewer = (): React.ReactElement => {
   useEffect(() => {
     setLevel(map.getLevel())
   }, [map])
-
-  const { logs } = status as StatusState
 
   const displayTimeAt = useCallback(
     (t: number) => {
@@ -325,6 +326,7 @@ const Viewer = (): React.ReactElement => {
       try {
         const { logs } = JSON.parse(result)
         setStatus((prev) => ({ ...prev, logs }))
+        displayTimeAt(0)
       } catch {
         window.alert("Wrong JSON file format")
       }
