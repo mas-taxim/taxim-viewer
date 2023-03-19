@@ -85,7 +85,7 @@ const RoadLineStyled = styled.div`
   position: absolute;
   width: 100%;
   height: 3px;
-  background-color: #dfdfdf;
+  background-color: #efefef;
   border-radius: 1em;
   z-index: 0;
 `
@@ -352,25 +352,50 @@ const Viewer = (): React.ReactElement => {
               ({ id }: any) => id === allocated_id
             )
             if (task.length < 1) return null
-            const { id, pick_lat, pick_lng, drop_lat, drop_lng }: TaskType =
-              task[0] as TaskType
+            const {
+              id,
+              status,
+              pick_lat,
+              pick_lng,
+              drop_lat,
+              drop_lng,
+            }: TaskType = task[0] as TaskType
+
+            const isPicked = status > 5
+            const isDroped = status > 6
+
+            const IconReadyStyle = {
+              backgroundColor: "transparent",
+              borderWidth: "1px",
+              borderColor: colors[id],
+              borderStyle: "dashed",
+            }
+
+            const IconReadyInnerStyle = {
+              fill: colors[id],
+            }
+
             return (
               <LogInfoStyled className="pairs" key={`pair-of-${time}-${id}`}>
                 <LogIcon
-                  color={colors[id]}
+                  color={status <= 5 ? "transparent" : colors[id]}
                   style={{
                     justifySelf: "flex-start",
+                    ...(isPicked ? {} : IconReadyStyle),
                   }}
                 >
                   <Icon
                     type={MarkerType.PERSON_PICK}
                     style={{
                       margin: "0 auto",
+                      ...(isPicked ? {} : IconReadyInnerStyle),
                     }}
                   />
                 </LogIcon>
                 <VehicleLogInfoStyled>
-                  <RoadLineStyled />
+                  <RoadLineStyled
+                    style={isPicked ? { backgroundColor: colors[id] } : {}}
+                  />
                   <div
                     style={{
                       position: "absolute",
@@ -406,12 +431,14 @@ const Viewer = (): React.ReactElement => {
                   color={colors[id]}
                   style={{
                     justifySelf: "flex-end",
+                    ...(isDroped ? {} : IconReadyStyle),
                   }}
                 >
                   <Icon
                     type={MarkerType.PERSON_DROP}
                     style={{
                       margin: "0 auto",
+                      ...(isDroped ? {} : IconReadyInnerStyle),
                     }}
                   />
                 </LogIcon>
