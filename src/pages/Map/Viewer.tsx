@@ -1,15 +1,20 @@
 /* global kakao */
 
-import React, { useEffect, useState, useCallback } from "react"
+import React, { useEffect, useState, useCallback, useRef } from "react"
 
 import Dot from "../../components/Dot"
+import Aside from "../../components/Aside"
+
 import LocalTaxiIcon from "@mui/icons-material/LocalTaxi"
 import HailIcon from "@mui/icons-material/Hail"
 import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown"
+import { Divider, Stack, Typography } from "@mui/joy"
+
 import { CustomOverlayMap, useMap } from "react-kakao-maps-sdk"
 
 import { useStatusState, StatusState } from "../../providers/StatusProvider"
 import ViewerButtons from "./Controls/ViewerButtons"
+import { humanizeDate } from "../../helpers/stringFormat"
 
 const MarkerType = {
   NONE: -1,
@@ -250,6 +255,40 @@ const Viewer = (): React.ReactElement => {
     reader.readAsText(file)
   }
 
+  const sidePanelRef = useRef(null)
+
+  useEffect(() => {
+    if (!sidePanelRef || !sidePanelRef.current) return
+    const div: HTMLDivElement = sidePanelRef.current
+    div.scrollTo({ top: div.scrollHeight })
+  }, [sidePanelRef, progressCurrent])
+
+  const StateViewer = useCallback((): React.ReactElement => {
+    if (!logs || logs.length < 1) {
+      return <></>
+    }
+
+    const sublogs: Array<{
+      time: number
+      vehicles: Array<any>
+      tasks: Array<any>
+    }> = logs.slice(0, progressCurrent + 1)
+
+    return (
+      <>
+        {sublogs.map(({ time, vehicles, tasks }) => (
+          <div key={`log-${time}`}>
+            <Divider>
+              <Typography color="neutral" fontSize={2}>
+                {humanizeDate(new Date(time))}
+              </Typography>
+            </Divider>
+          </div>
+        ))}
+      </>
+    )
+  }, [logs, progressCurrent])
+
   return (
     <>
       {markerPositions.map(
@@ -283,6 +322,12 @@ const Viewer = (): React.ReactElement => {
         onClickPlay={() => setRunning(!running)}
         onClickUpload={loadLogFromFile}
       />
+
+      <Aside ref={sidePanelRef}>
+        <Stack spacing={1}>
+          <StateViewer />
+        </Stack>
+      </Aside>
     </>
   )
 }

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react"
+import React, { useState, useCallback, PropsWithChildren } from "react"
 
 import styled, { css, keyframes } from "styled-components"
 
@@ -10,7 +10,7 @@ const ContainerWrapper = styled.div<{ fold: boolean }>`
   top: 0;
   left: 0;
   width: 100%;
-  max-width: 400px;
+  max-width: 280px;
   height: 100%;
   display: flex;
   align-items: center;
@@ -36,6 +36,7 @@ const ContainerStyled = styled.div`
   padding: 1em 2em;
   box-sizing: border-box;
   box-shadow: 0 0 1em rgba(128, 128, 128, 0.5);
+  overflow-y: auto;
 `
 
 const FoldButtonContainerStyled = styled.div`
@@ -64,8 +65,16 @@ const FoldButtonStyled = styled.div`
   cursor: pointer;
 `
 
-const Container = (props: React.PropsWithChildren): React.ReactElement => {
-  const [fold, setFold] = useState<boolean>(false)
+type ContainerProps = {
+  _ref: React.ForwardedRef<any>
+  children?: React.ReactNode
+}
+
+const Container = ({
+  _ref: ref,
+  children,
+}: ContainerProps): React.ReactElement => {
+  const [fold, setFold] = useState<boolean>(true)
   const ArrowIcon = useCallback(() => {
     const props = {
       sx: {
@@ -73,15 +82,15 @@ const Container = (props: React.PropsWithChildren): React.ReactElement => {
       },
     }
     return fold ? (
-      <KeyboardDoubleArrowRightIcon {...props} />
+      <KeyboardDoubleArrowRightIcon />
     ) : (
-      <KeyboardDoubleArrowLeftIcon {...props} />
+      <KeyboardDoubleArrowLeftIcon />
     )
   }, [fold])
   return (
     <ContainerWrapper fold={fold}>
-      <ContainerStyled>
-        <>{props.children}</>
+      <ContainerStyled ref={ref}>
+        <>{children}</>
       </ContainerStyled>
       <FoldButtonContainerStyled>
         <FoldButtonStyled
@@ -96,14 +105,10 @@ const Container = (props: React.PropsWithChildren): React.ReactElement => {
   )
 }
 
-const Aside = (props: React.PropsWithChildren): React.ReactElement => {
-  return (
-    <>
-      <Container>
-        <>{props.children}</>
-      </Container>
-    </>
-  )
-}
+const Aside = React.forwardRef((props: PropsWithChildren, ref) => (
+  <Container _ref={ref}>
+    <>{props.children}</>
+  </Container>
+))
 
 export default Aside

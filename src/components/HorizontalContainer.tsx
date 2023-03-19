@@ -5,7 +5,7 @@ import styled, { css } from "styled-components"
 const ContainerStyled = styled.div<{ position: "top" | "bottom" }>`
   position: absolute;
   display: flex;
-  left: calc(200px + 50%);
+  left: calc(0px + 50%);
   translate: -50% 0%;
   margin: 0 auto;
   width: fit-content;
