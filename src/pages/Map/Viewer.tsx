@@ -21,6 +21,7 @@ import { CustomOverlayMap, useMap } from "react-kakao-maps-sdk"
 import { useStatusState, StatusState } from "../../providers/StatusProvider"
 import ViewerButtons from "./Controls/ViewerButtons"
 import { humanizeDate } from "../../helpers/stringFormat"
+import styled from "styled-components"
 
 const MarkerType = {
   NONE: -1,
@@ -52,6 +53,86 @@ type TaskType = {
   pick_lng: number
   status: number
   time: number
+}
+
+const LogIcon = ({ color, style, children }: any): React.ReactElement => (
+  <div
+    style={{
+      backgroundColor: color || "black",
+      display: "flex",
+      justifyItems: "center",
+      alignItems: "center",
+      width: "32px",
+      height: "32px",
+      borderRadius: "6rem",
+      ...style,
+    }}
+  >
+    <>{children}</>
+  </div>
+)
+
+const VehicleLogInfoStyled = styled.div`
+  width: calc(100% - 12px);
+  position: relative;
+  box-sizing: border-box;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+`
+
+const RoadLineStyled = styled.div`
+  position: absolute;
+  width: 100%;
+  height: 3px;
+  background-color: #dfdfdf;
+  border-radius: 1em;
+  z-index: 0;
+`
+
+type DisplayIconProps = {
+  type: number
+  style?: CSSProperties
+}
+
+const Icon = ({ type, style = {} }: DisplayIconProps): any => {
+  const iconStyle = {
+    fill: "white",
+    marginTop: "-1px",
+    width: "75%",
+    ...style,
+  }
+  if (type == MarkerType.NONE) {
+    return <></>
+  } else if (type == MarkerType.VEHICLE) {
+    return <LocalTaxiIcon style={iconStyle} />
+  } else if (type == MarkerType.PERSON_PICK) {
+    return <HailIcon style={iconStyle} />
+  } else if (type == MarkerType.PERSON_DROP) {
+    return <KeyboardDoubleArrowDownIcon style={iconStyle} />
+  }
+}
+
+const LogInfoStyled = styled.div`
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  padding: 0.5rem 0;
+`
+
+const get_slope_weight = (
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  cx: number,
+  cy: number
+) => {
+  const lx = Math.abs(x2 - x1)
+  const ly = Math.abs(y2 - y1)
+  const dx = cx - x1
+  const dy = cy - y1
+  const r = Math.sqrt(dx * dx + dy * dy) / Math.sqrt(lx * lx + ly * ly)
+  return Math.max(0.0, Math.min(r * 100.0, 100.0))
 }
 
 const Viewer = (): React.ReactElement => {
@@ -177,16 +258,18 @@ const Viewer = (): React.ReactElement => {
         vehicles
           .map(({ lat, lng }: any) => ({ lat, lng }))
           .concat(
-            ...tasks.map(({ pick_lat, pick_lng, drop_lat, drop_lng }: any) => [
-              {
-                lat: pick_lat,
-                lng: pick_lng,
-              },
-              {
-                lat: drop_lat,
-                lng: drop_lng,
-              },
-            ])
+            ...tasks.map(
+              ({ pick_lat, pick_lng, drop_lat, drop_lng }: TaskType) => [
+                {
+                  lat: pick_lat,
+                  lng: pick_lng,
+                },
+                {
+                  lat: drop_lat,
+                  lng: drop_lng,
+                },
+              ]
+            )
           )
       )
       .flat()
@@ -230,24 +313,6 @@ const Viewer = (): React.ReactElement => {
     setColors(nameKeyValueMap)
   }, [logs])
 
-  const displayIcon = useCallback((iconType: number, style?: CSSProperties) => {
-    const iconStyle = {
-      fill: "white",
-      marginTop: "-1px",
-      width: "75%",
-      ...style,
-    }
-    if (iconType == MarkerType.NONE) {
-      return <></>
-    } else if (iconType == MarkerType.VEHICLE) {
-      return <LocalTaxiIcon style={iconStyle} />
-    } else if (iconType == MarkerType.PERSON_PICK) {
-      return <HailIcon style={iconStyle} />
-    } else if (iconType == MarkerType.PERSON_DROP) {
-      return <KeyboardDoubleArrowDownIcon style={iconStyle} />
-    }
-  }, [])
-
   const loadLogFromFile = (evt: React.ChangeEvent<HTMLInputElement>) => {
     const files = evt.target.files
     if (!files || files.length < 1) {
@@ -272,117 +337,124 @@ const Viewer = (): React.ReactElement => {
   useEffect(() => {
     if (!sidePanelRef || !sidePanelRef.current) return
     const div: HTMLDivElement = sidePanelRef.current
-    div.scrollTo({ top: div.scrollHeight, behavior: "smooth" })
+    setTimeout(() => {
+      div.scrollTo({ top: div.scrollHeight, behavior: "smooth" })
+    }, 100)
   }, [sidePanelRef, progressCurrent])
 
-  const LogInfo = useCallback(
-    ({ time, vehicles, tasks }: any) => {
-      const Icon = ({ color, type, style }: any): React.ReactElement => (
-        <div
-          style={{
-            backgroundColor: color || "black",
-            display: "flex",
-            justifyItems: "center",
-            alignItems: "center",
-            width: "32px",
-            height: "32px",
-            borderRadius: "6rem",
-            ...style,
-          }}
-        >
-          {displayIcon(type, {
-            margin: "0 auto",
-          })}
-        </div>
-      )
-      console.log("vvv", vehicles)
-      console.log(
-        "vvv1",
-        vehicles.filter(({ allocated_id }: any) => !!allocated_id)
-      )
-      console.log(
-        "vvv2",
-        vehicles.filter(({ allocated_id }: any) => allocated_id != null)
-      )
-      return (
-        <>
-          {vehicles
-            .filter(({ allocated_id }: any) => allocated_id != null)
-            .map(({ name, allocated_id }: any) => {
-              const task = Array.from(tasks || []).filter(
-                ({ id }: any) => id === allocated_id
-              )
-              if (task.length < 1) return null
-              const { id, pick_lat, pick_lng, drop_lat, drop_lng }: any =
-                task[0]
-              return (
-                <>
-                  <div
-                    className="pairs"
-                    key={`pair-of-${id}`}
+  const LogInfo = useCallback(({ time, vehicles, tasks, colors }: any) => {
+    return (
+      <>
+        {vehicles
+          .filter(({ allocated_id }: any) => allocated_id != null)
+          .map(({ name, lat, lng, allocated_id }: any) => {
+            const task = Array.from(tasks || []).filter(
+              ({ id }: any) => id === allocated_id
+            )
+            if (task.length < 1) return null
+            const { id, pick_lat, pick_lng, drop_lat, drop_lng }: TaskType =
+              task[0] as TaskType
+            return (
+              <LogInfoStyled className="pairs" key={`pair-of-${time}-${id}`}>
+                <LogIcon
+                  color={colors[id]}
+                  style={{
+                    justifySelf: "flex-start",
+                  }}
+                >
+                  <Icon
+                    type={MarkerType.PERSON_PICK}
                     style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr 1fr",
-                      padding: "0.5rem 0",
+                      margin: "0 auto",
+                    }}
+                  />
+                </LogIcon>
+                <VehicleLogInfoStyled>
+                  <RoadLineStyled />
+                  <div
+                    style={{
+                      position: "absolute",
+                      width: "calc(100% - 32px)",
+                      top: 0,
                     }}
                   >
-                    <Icon
-                      color={allColors[id]}
-                      type={MarkerType.PERSON_PICK}
+                    <LogIcon
+                      color={colors[name]}
                       style={{
-                        justifySelf: "flex-start",
+                        position: "absolute",
+                        left: `${get_slope_weight(
+                          pick_lat,
+                          pick_lng,
+                          drop_lat,
+                          drop_lng,
+                          lat,
+                          lng
+                        )}%`,
+                        zIndex: 1,
                       }}
-                    />
-                    <Icon
-                      color={allColors[name]}
-                      type={MarkerType.VEHICLE}
-                      style={{
-                        justifySelf: "center",
-                      }}
-                    />
-                    <Icon
-                      color={allColors[id]}
-                      type={MarkerType.PERSON_DROP}
-                      style={{
-                        justifySelf: "flex-end",
-                      }}
-                    />
+                    >
+                      <Icon
+                        type={MarkerType.VEHICLE}
+                        style={{
+                          margin: "0 auto",
+                        }}
+                      />
+                    </LogIcon>
                   </div>
-                </>
-              )
-            })}
-        </>
-      )
-    },
-    [displayIcon, allColors]
-  )
+                </VehicleLogInfoStyled>
+                <LogIcon
+                  color={colors[id]}
+                  style={{
+                    justifySelf: "flex-end",
+                  }}
+                >
+                  <Icon
+                    type={MarkerType.PERSON_DROP}
+                    style={{
+                      margin: "0 auto",
+                    }}
+                  />
+                </LogIcon>
+              </LogInfoStyled>
+            )
+          })}
+      </>
+    )
+  }, [])
 
-  const StateViewer = useCallback((): React.ReactElement => {
-    if (!logs || logs.length < 1) {
-      return <></>
-    }
+  const [subLogs, setSubLogs] = useState<Array<any>>([])
 
-    const sublogs: Array<{
+  useEffect(() => {
+    if (!logs || logs.length < 1) return
+    const sliced: Array<{
       time: number
       vehicles: Array<any>
       tasks: Array<any>
     }> = logs.slice(0, progressCurrent + 1)
+    setSubLogs(sliced)
+  }, [logs, progressCurrent])
 
+  const StateViewer = useCallback((): React.ReactElement => {
     return (
       <>
-        {sublogs.map(({ time, vehicles, tasks }) => (
+        {subLogs.map(({ time, vehicles, tasks }) => (
           <div key={`log-${time}`}>
             <Divider>
               <Typography color="neutral" fontSize={2}>
                 {humanizeDate(new Date(time))}
               </Typography>
             </Divider>
-            <LogInfo time={time} vehicles={vehicles} tasks={tasks} />
+            <LogInfo
+              time={time}
+              vehicles={vehicles}
+              tasks={tasks}
+              colors={allColors}
+            />
           </div>
         ))}
       </>
     )
-  }, [logs, progressCurrent])
+  }, [subLogs, allColors])
 
   return (
     <>
@@ -401,7 +473,7 @@ const Viewer = (): React.ReactElement => {
             }}
           >
             <Dot color={color || "dodgerblue"} size={size / level}>
-              {displayIcon(type)}
+              <Icon type={type as number} />
             </Dot>
           </CustomOverlayMap>
         )
