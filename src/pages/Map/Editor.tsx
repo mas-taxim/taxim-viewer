@@ -60,32 +60,65 @@ const Editor = (): React.ReactElement => {
     })
   }, [tmpNodes, edges])
 
-  const compactNodes = (_nodes: Array<NodeType>) => {
-    if (_nodes.length > 1000) {
-      console.warn("Too much nodes to display over 5k")
-      return _nodes.slice(0, 1000)
+  const getMapBounds = useCallback(() => {
+    const bounds = map.getBounds()
+    const level = map.getLevel()
+    const [ne, sw] = [bounds.getNorthEast(), bounds.getSouthWest()]
+    const top = sw.getLat()
+    const left = sw.getLng()
+    const bottom = ne.getLat()
+    const right = ne.getLng()
+    const width: number = right - left
+    const height: number = bottom - top
+    return {
+      level,
+      top,
+      left,
+      bottom,
+      right,
+      width,
+      height,
     }
-    return _nodes
-  }
+  }, [map])
 
   const setTmpNodes = useCallback(
     (newNodes: Array<NodeType>) => {
-      const bounds = map.getBounds()
-      const [ne, sw] = [bounds.getNorthEast(), bounds.getSouthWest()]
-      const top = sw.getLat()
-      const left = sw.getLng()
-      const bottom = ne.getLat()
-      const right = ne.getLng()
+      const { top, left, bottom, right, width, height, level } = getMapBounds()
       const nodesInBounds = newNodes.filter(
         ({ lat, lng }: NodeType): boolean =>
           top <= lat && lat <= bottom && left <= lng && lng <= right
       )
-      const compactedNodes = compactNodes(nodesInBounds)
+      type nodeInGrid = { lat: number; lng: number; grid: string }
+      const nodesInGrid: Array<nodeInGrid> = nodesInBounds.map(
+        ({ lat, lng }) => ({
+          lat,
+          lng,
+          grid: `${Math.round(lat / (width / 100))},${Math.round(
+            lng / (height / 100)
+          )}`,
+        })
+      )
+      const compressNodesInGrid: Array<NodeType> = [
+        ...Array.from(
+          new Map(
+            nodesInGrid.map(({ key, grid, lat, lng }: any) => [
+              grid,
+              {
+                key,
+                lat,
+                lng,
+              } as NodeType,
+            ])
+          ).values()
+        ),
+      ]
       console.log("Bounds:", top, left, bottom, right)
-      console.log("Set New Temporal Nodes", compactedNodes, nodesInBounds)
-      _setTmpNodes(nodesInBounds)
+      console.log("Nodes(Grid)", nodesInGrid, compressNodesInGrid)
+      console.log("Bounds (width, height)", bottom - top, right - left, level)
+      console.log("Set New Temporal Nodes", compressNodesInGrid)
+      _setTmpNodes(compressNodesInGrid)
     },
-    [map]
+    [getMapBounds]
   )
 
   const isSelected = useCallback(
@@ -236,7 +269,8 @@ const Editor = (): React.ReactElement => {
   const onMouseDownPoint = useCallback(
     (evt: any) => {
       const container = evt.target.closest("[data-id]") as HTMLElement
-      const id = container.getAttribute("data-id") as string
+      if (!container) return
+      const id = container.getAttribute("data-id") || ""
       const mouseType = evt.button as number
       if (editMode === "add") {
         if (mouseType === 2) {
@@ -285,7 +319,7 @@ const Editor = (): React.ReactElement => {
   )
 
   const NodePoints = useCallback((): React.ReactElement => {
-    console.log("NodePoints", tmpNodes)
+    const { level } = getMapBounds()
     return (
       <>
         {tmpNodes.map(
@@ -309,7 +343,7 @@ const Editor = (): React.ReactElement => {
         )}
       </>
     )
-  }, [tmpNodes, level, isSelected, onMouseDownPoint, onMouseUpPoint])
+  }, [tmpNodes, getMapBounds, isSelected, onMouseDownPoint, onMouseUpPoint])
 
   const EdgeLines = useCallback(
     (): React.ReactElement => (
