@@ -51,6 +51,15 @@ const Editor = (): React.ReactElement => {
   const [selected, setSelected] = useState<Array<string>>([])
   const [cursorPos, setCursorPos] = useState<NodeType>()
 
+  const visibleEdges = useMemo((): Array<EdgeType> => {
+    return edges.filter(({ from, to }: EdgeType) => {
+      for (const { key } of tmpNodes) {
+        if (from === key || to === key) return true
+      }
+      return false
+    })
+  }, [tmpNodes, edges])
+
   const compactNodes = (_nodes: Array<NodeType>) => {
     if (_nodes.length > 1000) {
       console.warn("Too much nodes to display over 5k")
@@ -61,7 +70,6 @@ const Editor = (): React.ReactElement => {
 
   const setTmpNodes = useCallback(
     (newNodes: Array<NodeType>) => {
-      // node
       const bounds = map.getBounds()
       const [ne, sw] = [bounds.getNorthEast(), bounds.getSouthWest()]
       const top = sw.getLat()
@@ -101,17 +109,28 @@ const Editor = (): React.ReactElement => {
     )
   }
 
+  const findNode = (id: string, array: Array<NodeType>): NodeType | null => {
+    for (const node of array) {
+      const { key } = node
+      if (key === id) return node
+    }
+    return null
+  }
+
   const getNode = useCallback(
     (id: string): NodeType | null => {
-      const node = nodes.filter(({ key }: NodeType) => key === id)
-      return node.length > 0 ? node[0] : null
+      return findNode(id, nodes)
     },
     [nodes]
   )
 
-  const hasNode = useCallback(
-    (id: string): boolean => getNode(id) !== null,
-    [getNode]
+  const isNodeVisible = useCallback(
+    (id: string): boolean => {
+      const result = findNode(id, tmpNodes) !== null
+      console.log("isNodeVisible", id, result)
+      return result
+    },
+    [tmpNodes]
   )
 
   useEffect(() => {
@@ -123,10 +142,11 @@ const Editor = (): React.ReactElement => {
 
   useEffect(() => {
     // update edge to sync up
+    const hasNode = (id: string): boolean => getNode(id) !== null
     setEdges((prev) =>
       prev.filter(({ from, to }: EdgeType) => hasNode(from) && hasNode(to))
     )
-  }, [hasNode, setEdges])
+  }, [getNode, setEdges])
 
   useEffect(() => {
     console.log("selected", selected)
@@ -294,7 +314,7 @@ const Editor = (): React.ReactElement => {
   const EdgeLines = useCallback(
     (): React.ReactElement => (
       <>
-        {edges.map(({ from, to }: EdgeType): React.ReactElement => {
+        {visibleEdges.map(({ from, to }: EdgeType): React.ReactElement => {
           const path: Array<any> = [from, to]
             .map(getNode)
             .filter((n) => n !== null)
@@ -317,7 +337,7 @@ const Editor = (): React.ReactElement => {
         })}
       </>
     ),
-    [edges, getNode]
+    [visibleEdges, getNode, isNodeVisible]
   )
 
   const fitMapBound = useCallback(
