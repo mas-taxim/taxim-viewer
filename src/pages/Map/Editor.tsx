@@ -44,11 +44,41 @@ const saveGraphFile = (
 const Editor = (): React.ReactElement => {
   const map: kakao.maps.Map = useMap()
   const [nodes, setNodes] = useState<Array<NodeType>>([])
+  const [tmpNodes, _setTmpNodes] = useState<Array<NodeType>>([])
   const [edges, setEdges] = useState<Array<EdgeType>>([])
   const [level, setLevel] = useState<number>(1)
   const [editMode, setEditMode] = useState<string>("add")
   const [selected, setSelected] = useState<Array<string>>([])
   const [cursorPos, setCursorPos] = useState<NodeType>()
+
+  const compactNodes = (_nodes: Array<NodeType>) => {
+    if (_nodes.length > 1000) {
+      console.warn("Too much nodes to display over 5k")
+      return _nodes.slice(0, 1000)
+    }
+    return _nodes
+  }
+
+  const setTmpNodes = useCallback(
+    (newNodes: Array<NodeType>) => {
+      // node
+      const bounds = map.getBounds()
+      const [ne, sw] = [bounds.getNorthEast(), bounds.getSouthWest()]
+      const top = sw.getLat()
+      const left = sw.getLng()
+      const bottom = ne.getLat()
+      const right = ne.getLng()
+      const nodesInBounds = newNodes.filter(
+        ({ lat, lng }: NodeType): boolean =>
+          top <= lat && lat <= bottom && left <= lng && lng <= right
+      )
+      const compactedNodes = compactNodes(nodesInBounds)
+      console.log("Bounds:", top, left, bottom, right)
+      console.log("Set New Temporal Nodes", compactedNodes, nodesInBounds)
+      _setTmpNodes(nodesInBounds)
+    },
+    [map]
+  )
 
   const isSelected = useCallback(
     (id: string) => selected.indexOf(id) !== -1,
@@ -86,6 +116,9 @@ const Editor = (): React.ReactElement => {
 
   useEffect(() => {
     setLevel(map.getLevel())
+    setTimeout(() => {
+      map.relayout()
+    }, 0)
   }, [map])
 
   useEffect(() => {
@@ -117,6 +150,7 @@ const Editor = (): React.ReactElement => {
       }
       const lat = loc.getLat()
       const lng = loc.getLng()
+      console.log("Map Clicked", lat, lng)
       setNodes((prev) => {
         const nodeId = Math.random().toString(16).slice(2) as string
         const node = { key: `node-${nodeId}`, lat, lng } as NodeType
@@ -153,6 +187,18 @@ const Editor = (): React.ReactElement => {
     },
     [editMode, setNodes, selected, setCursorPos]
   )
+
+  useEffect(() => {
+    const updateNodes = () => setTmpNodes(nodes)
+    kakao.maps.event.addListener(map, "idle", updateNodes)
+    return () => {
+      kakao.maps.event.addListener(map, "idle", updateNodes)
+    }
+  }, [map, nodes])
+
+  useEffect(() => {
+    setTmpNodes(nodes)
+  }, [nodes])
 
   useEffect(() => {
     map.setCursor("default")
@@ -197,7 +243,7 @@ const Editor = (): React.ReactElement => {
 
   const onMouseUpPoint = useCallback((evt: any) => {}, [])
 
-  const GuideLine = useCallback(
+  const guideLine = useMemo(
     (): React.ReactElement => (
       <>
         {editMode === "link" && selectedNode && cursorPos && (
@@ -218,10 +264,11 @@ const Editor = (): React.ReactElement => {
     [editMode, selectedNode, cursorPos]
   )
 
-  const NodePoints = useCallback(
-    (): React.ReactElement => (
+  const NodePoints = useCallback((): React.ReactElement => {
+    console.log("NodePoints", tmpNodes)
+    return (
       <>
-        {nodes.map(
+        {tmpNodes.map(
           ({ key, lat, lng }: NodeType): React.ReactElement => (
             <CustomOverlayMap
               position={{
@@ -241,9 +288,8 @@ const Editor = (): React.ReactElement => {
           )
         )}
       </>
-    ),
-    [nodes, level, isSelected, onMouseDownPoint, onMouseUpPoint]
-  )
+    )
+  }, [tmpNodes, level, isSelected, onMouseDownPoint, onMouseUpPoint])
 
   const EdgeLines = useCallback(
     (): React.ReactElement => (
@@ -266,7 +312,6 @@ const Editor = (): React.ReactElement => {
               strokeColor="#db4040"
               strokeOpacity={1}
               strokeStyle="solid"
-              onCreate={console.log}
             />
           )
         })}
@@ -283,6 +328,9 @@ const Editor = (): React.ReactElement => {
         bounds.extend(new kakao.maps.LatLng(lat, lng))
       })
       map.setBounds(bounds)
+      setTimeout(() => {
+        map.relayout()
+      }, 0)
     },
     [map]
   )
@@ -318,7 +366,7 @@ const Editor = (): React.ReactElement => {
             )
           )
           fitMapBound(nodes)
-          console.log(nodes, edges)
+          // console.log(nodes, edges)
         } catch {
           window.alert("Failed to parse JSON")
         }
@@ -336,7 +384,7 @@ const Editor = (): React.ReactElement => {
   return (
     <>
       <EdgeLines />
-      <GuideLine />
+      {guideLine}
       <NodePoints />
       <EditorButtons
         editMode={editMode || "add"}
