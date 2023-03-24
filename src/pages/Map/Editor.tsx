@@ -44,7 +44,7 @@ const saveGraphFile = (
 const Editor = (): React.ReactElement => {
   const map: kakao.maps.Map = useMap()
   const [nodes, setNodes] = useState<Array<NodeType>>([])
-  const [tmpNodes, _setTmpNodes] = useState<Array<NodeType>>([])
+  const [bufNodes, _setBufNodes] = useState<Array<NodeType>>([])
   const [edges, setEdges] = useState<Array<EdgeType>>([])
   const [level, setLevel] = useState<number>(1)
   const [editMode, setEditMode] = useState<string>("add")
@@ -52,13 +52,14 @@ const Editor = (): React.ReactElement => {
   const [cursorPos, setCursorPos] = useState<NodeType>()
 
   const visibleEdges = useMemo((): Array<EdgeType> => {
+    console.log(bufNodes, edges)
     return edges.filter(({ from, to }: EdgeType) => {
-      for (const { key } of tmpNodes) {
+      for (const { key } of bufNodes) {
         if (from === key || to === key) return true
       }
       return false
     })
-  }, [tmpNodes, edges])
+  }, [bufNodes, edges])
 
   const getMapBounds = useCallback(() => {
     const bounds = map.getBounds()
@@ -90,7 +91,9 @@ const Editor = (): React.ReactElement => {
       )
       type nodeInGrid = { lat: number; lng: number; grid: string }
       const nodesInGrid: Array<nodeInGrid> = nodesInBounds.map(
-        ({ lat, lng }) => ({
+        ({ key, lat, lng }) => ({
+          id: key,
+          key,
           lat,
           lng,
           grid: `${Math.round(lat / (width / 100))},${Math.round(
@@ -104,6 +107,7 @@ const Editor = (): React.ReactElement => {
             nodesInGrid.map(({ key, grid, lat, lng }: any) => [
               grid,
               {
+                id: key,
                 key,
                 lat,
                 lng,
@@ -116,7 +120,7 @@ const Editor = (): React.ReactElement => {
       console.log("Nodes(Grid)", nodesInGrid, compressNodesInGrid)
       console.log("Bounds (width, height)", bottom - top, right - left, level)
       console.log("Set New Temporal Nodes", compressNodesInGrid)
-      _setTmpNodes(compressNodesInGrid)
+      _setBufNodes(compressNodesInGrid)
     },
     [getMapBounds]
   )
@@ -159,11 +163,11 @@ const Editor = (): React.ReactElement => {
 
   const isNodeVisible = useCallback(
     (id: string): boolean => {
-      const result = findNode(id, tmpNodes) !== null
+      const result = findNode(id, bufNodes) !== null
       console.log("isNodeVisible", id, result)
       return result
     },
-    [tmpNodes]
+    [bufNodes]
   )
 
   useEffect(() => {
@@ -322,7 +326,7 @@ const Editor = (): React.ReactElement => {
     const { level } = getMapBounds()
     return (
       <>
-        {tmpNodes.map(
+        {bufNodes.map(
           ({ key, lat, lng }: NodeType): React.ReactElement => (
             <CustomOverlayMap
               position={{
@@ -343,7 +347,7 @@ const Editor = (): React.ReactElement => {
         )}
       </>
     )
-  }, [tmpNodes, getMapBounds, isSelected, onMouseDownPoint, onMouseUpPoint])
+  }, [bufNodes, getMapBounds, isSelected, onMouseDownPoint, onMouseUpPoint])
 
   const EdgeLines = useCallback(
     (): React.ReactElement => (
