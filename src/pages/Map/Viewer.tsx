@@ -44,6 +44,15 @@ interface ColorName {
 }
 
 const randomColor = () => "#" + Math.random().toString(16).slice(-6)
+const randomDarkColor = () => {
+  let rgb = [Math.random() * 255, Math.random() * 255, Math.random() * 255].map(
+    Math.round
+  )
+  if (rgb.filter((c) => c >= 128).length > 2) {
+    rgb = rgb.map((c) => Math.max(0, (c - 128) * 2))
+  }
+  return "#" + rgb.map((c) => c.toString(16).padStart(2, "0")).join("")
+}
 
 type TaskType = {
   id: number
@@ -308,7 +317,7 @@ const Viewer = (): React.ReactElement => {
       ),
     ]
       .map((name: string) => ({
-        [name]: randomColor(),
+        [name]: randomDarkColor(),
       }))
       .reduce(
         (
@@ -357,6 +366,12 @@ const Viewer = (): React.ReactElement => {
         <>
           {vehicles
             .filter(({ allocated_id }: any) => allocated_id != null)
+            .sort((a: any, b: any) => {
+              const prev = `${a.lat}-${b.lat}`
+              const next = `${a.lng}-${b.lng}`
+              if (prev < next) return -1
+              return prev === next ? 0 : 1
+            })
             .map(({ name, lat, lng, allocated_id }: any) => {
               const task = Array.from(tasks || []).filter(
                 ({ id }: any) => id === allocated_id
