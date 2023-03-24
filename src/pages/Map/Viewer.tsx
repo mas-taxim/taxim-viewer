@@ -55,7 +55,12 @@ type TaskType = {
   time: number
 }
 
-const LogIcon = ({ color, style, children }: any): React.ReactElement => (
+const LogIcon = ({
+  color,
+  style,
+  children,
+  onClick,
+}: any): React.ReactElement => (
   <div
     style={{
       backgroundColor: color || "black",
@@ -67,6 +72,7 @@ const LogIcon = ({ color, style, children }: any): React.ReactElement => (
       borderRadius: "6rem",
       ...style,
     }}
+    onClick={onClick || null}
   >
     <>{children}</>
   </div>
@@ -161,6 +167,10 @@ const Viewer = (): React.ReactElement => {
   useEffect(() => {
     setLevel(map.getLevel())
   }, [map])
+
+  useEffect(() => {
+    map.setLevel(level)
+  }, [map, level])
 
   const displayTimeAt = useCallback(
     (t: number) => {
@@ -334,120 +344,151 @@ const Viewer = (): React.ReactElement => {
     reader.readAsText(file)
   }
 
-  const LogInfo = useCallback(({ time, vehicles, tasks, colors }: any) => {
-    return (
-      <>
-        {vehicles
-          .filter(({ allocated_id }: any) => allocated_id != null)
-          .map(({ name, lat, lng, allocated_id }: any) => {
-            const task = Array.from(tasks || []).filter(
-              ({ id }: any) => id === allocated_id
-            )
-            if (task.length < 1) return null
-            const {
-              id,
-              status,
-              pick_lat,
-              pick_lng,
-              drop_lat,
-              drop_lng,
-            }: TaskType = task[0] as TaskType
+  const focusTo = useCallback(
+    ({ lat, lng }: any) => {
+      map.panTo(new kakao.maps.LatLng(lat, lng))
+    },
+    [map]
+  )
 
-            const isPicked = status > 5
-            const isDroped = status > 6
+  const LogInfo = useCallback(
+    ({ time, vehicles, tasks, colors }: any) => {
+      return (
+        <>
+          {vehicles
+            .filter(({ allocated_id }: any) => allocated_id != null)
+            .map(({ name, lat, lng, allocated_id }: any) => {
+              const task = Array.from(tasks || []).filter(
+                ({ id }: any) => id === allocated_id
+              )
+              if (task.length < 1) return null
+              const {
+                id,
+                status,
+                pick_lat,
+                pick_lng,
+                drop_lat,
+                drop_lng,
+              }: TaskType = task[0] as TaskType
 
-            const IconReadyStyle = {
-              backgroundColor: "transparent",
-              borderWidth: "1px",
-              borderColor: colors[id],
-              borderStyle: "dashed",
-            }
+              const isPicked = status > 5
+              const isDroped = status > 6
 
-            const IconNotReadyStyle = {
-              borderWidth: "1px",
-              borderColor: "transparent",
-              borderStyle: "solid",
-            }
+              const IconReadyStyle = {
+                backgroundColor: "transparent",
+                borderWidth: "1px",
+                borderColor: colors[id],
+                borderStyle: "dashed",
+              }
 
-            const IconReadyInnerStyle = {
-              fill: colors[id],
-            }
+              const IconNotReadyStyle = {
+                borderWidth: "1px",
+                borderColor: "transparent",
+                borderStyle: "solid",
+              }
 
-            return (
-              <LogInfoStyled className="pairs" key={`log-info-${id}`}>
-                <LogIcon
-                  color={status <= 5 ? "transparent" : colors[id]}
-                  style={{
-                    justifySelf: "flex-start",
-                    ...(isPicked ? IconNotReadyStyle : IconReadyStyle),
-                  }}
-                >
-                  <Icon
-                    type={MarkerType.PERSON_PICK}
+              const IconReadyInnerStyle = {
+                fill: colors[id],
+              }
+
+              return (
+                <LogInfoStyled className="pairs" key={`log-info-${id}`}>
+                  <LogIcon
+                    color={status <= 5 ? "transparent" : colors[id]}
                     style={{
-                      margin: "0 auto",
-                      ...(isPicked ? {} : IconReadyInnerStyle),
+                      justifySelf: "flex-start",
+                      cursor: "pointer",
+                      ...(isPicked ? IconNotReadyStyle : IconReadyStyle),
                     }}
-                  />
-                </LogIcon>
-                <VehicleLogInfoStyled>
-                  <RoadLineStyled
-                    style={isPicked ? { backgroundColor: colors[id] } : {}}
-                  />
-                  <div
-                    style={{
-                      position: "absolute",
-                      width: "calc(100% - 32px)",
-                      top: 0,
+                    onClick={() => {
+                      focusTo({
+                        lat: pick_lat,
+                        lng: pick_lng,
+                      })
                     }}
                   >
-                    <LogIcon
-                      key={`logicon-name`}
-                      color={colors[name]}
+                    <Icon
+                      type={MarkerType.PERSON_PICK}
+                      style={{
+                        margin: "0 auto",
+                        ...(isPicked ? {} : IconReadyInnerStyle),
+                      }}
+                    />
+                  </LogIcon>
+                  <VehicleLogInfoStyled>
+                    <RoadLineStyled
+                      style={isPicked ? { backgroundColor: colors[id] } : {}}
+                    />
+                    <div
                       style={{
                         position: "absolute",
-                        left: `${get_slope_weight(
-                          pick_lat,
-                          pick_lng,
-                          drop_lat,
-                          drop_lng,
-                          lat,
-                          lng
-                        )}%`,
-                        transition: "all 300ms ease",
-                        zIndex: 1,
+                        width: "calc(100% - 32px)",
+                        top: 0,
                       }}
                     >
-                      <Icon
-                        type={MarkerType.VEHICLE}
+                      <LogIcon
+                        key={`logicon-name`}
+                        color={colors[name]}
                         style={{
-                          margin: "0 auto",
+                          position: "absolute",
+                          left: `${get_slope_weight(
+                            pick_lat,
+                            pick_lng,
+                            drop_lat,
+                            drop_lng,
+                            lat,
+                            lng
+                          )}%`,
+                          transition: "all 300ms ease",
+                          cursor: "pointer",
+                          zIndex: 1,
                         }}
-                      />
-                    </LogIcon>
-                  </div>
-                </VehicleLogInfoStyled>
-                <LogIcon
-                  color={colors[id]}
-                  style={{
-                    justifySelf: "flex-end",
-                    ...(isDroped ? IconNotReadyStyle : IconReadyStyle),
-                  }}
-                >
-                  <Icon
-                    type={MarkerType.PERSON_DROP}
+                        onClick={() => {
+                          focusTo({
+                            lat,
+                            lng,
+                          })
+                        }}
+                      >
+                        <Icon
+                          type={MarkerType.VEHICLE}
+                          style={{
+                            margin: "0 auto",
+                          }}
+                        />
+                      </LogIcon>
+                    </div>
+                  </VehicleLogInfoStyled>
+                  <LogIcon
+                    color={colors[id]}
                     style={{
-                      margin: "0 auto",
-                      ...(isDroped ? {} : IconReadyInnerStyle),
+                      justifySelf: "flex-end",
+                      cursor: "pointer",
+                      ...(isDroped ? IconNotReadyStyle : IconReadyStyle),
                     }}
-                  />
-                </LogIcon>
-              </LogInfoStyled>
-            )
-          })}
-      </>
-    )
-  }, [])
+                    onClick={() => {
+                      focusTo({
+                        lat: drop_lat,
+                        lng: drop_lng,
+                      })
+                    }}
+                  >
+                    <Icon
+                      type={MarkerType.PERSON_DROP}
+                      style={{
+                        margin: "0 auto",
+                        ...(isDroped ? {} : IconReadyInnerStyle),
+                      }}
+                    />
+                  </LogIcon>
+                </LogInfoStyled>
+              )
+            })}
+        </>
+      )
+    },
+    [focusTo]
+  )
 
   const [subLogs, setSubLogs] = useState<Array<any>>([])
 
