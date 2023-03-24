@@ -334,16 +334,6 @@ const Viewer = (): React.ReactElement => {
     reader.readAsText(file)
   }
 
-  const sidePanelRef = useRef(null)
-
-  useEffect(() => {
-    if (!sidePanelRef || !sidePanelRef.current) return
-    const div: HTMLDivElement = sidePanelRef.current
-    setTimeout(() => {
-      div.scrollTo({ top: div.scrollHeight, behavior: "smooth" })
-    }, 100)
-  }, [sidePanelRef, progressCurrent])
-
   const LogInfo = useCallback(({ time, vehicles, tasks, colors }: any) => {
     return (
       <>
@@ -373,17 +363,23 @@ const Viewer = (): React.ReactElement => {
               borderStyle: "dashed",
             }
 
+            const IconNotReadyStyle = {
+              borderWidth: "1px",
+              borderColor: "transparent",
+              borderStyle: "solid",
+            }
+
             const IconReadyInnerStyle = {
               fill: colors[id],
             }
 
             return (
-              <LogInfoStyled className="pairs" key={`pair-of-${time}-${id}`}>
+              <LogInfoStyled className="pairs" key={`log-info-${id}`}>
                 <LogIcon
                   color={status <= 5 ? "transparent" : colors[id]}
                   style={{
                     justifySelf: "flex-start",
-                    ...(isPicked ? {} : IconReadyStyle),
+                    ...(isPicked ? IconNotReadyStyle : IconReadyStyle),
                   }}
                 >
                   <Icon
@@ -406,6 +402,7 @@ const Viewer = (): React.ReactElement => {
                     }}
                   >
                     <LogIcon
+                      key={`logicon-name`}
                       color={colors[name]}
                       style={{
                         position: "absolute",
@@ -417,6 +414,7 @@ const Viewer = (): React.ReactElement => {
                           lat,
                           lng
                         )}%`,
+                        transition: "all 300ms ease",
                         zIndex: 1,
                       }}
                     >
@@ -433,7 +431,7 @@ const Viewer = (): React.ReactElement => {
                   color={colors[id]}
                   style={{
                     justifySelf: "flex-end",
-                    ...(isDroped ? {} : IconReadyStyle),
+                    ...(isDroped ? IconNotReadyStyle : IconReadyStyle),
                   }}
                 >
                   <Icon
@@ -487,28 +485,28 @@ const Viewer = (): React.ReactElement => {
         </center>
       )
     }
+    const latestLog = subLogs[subLogs.length - 1]
+    const { time, vehicles, tasks } = latestLog
     return (
       <Stack spacing={1}>
-        {subLogs.map(({ time, vehicles, tasks }) => (
-          <div key={`log-${time}`}>
-            <Divider
-              sx={{
-                marginTop: "0.5rem",
-                marginBottom: "0.25rem",
-              }}
-            >
-              <Typography color="neutral" fontSize={2}>
-                {humanizeDate(new Date(time))}
-              </Typography>
-            </Divider>
-            <LogInfo
-              time={time}
-              vehicles={vehicles}
-              tasks={tasks}
-              colors={allColors}
-            />
-          </div>
-        ))}
+        <div key={`log-${time}`}>
+          <Divider
+            sx={{
+              marginTop: "0.5rem",
+              marginBottom: "0.25rem",
+            }}
+          >
+            <Typography color="neutral" fontSize={2}>
+              {humanizeDate(new Date(time))}
+            </Typography>
+          </Divider>
+          <LogInfo
+            time={time}
+            vehicles={vehicles}
+            tasks={tasks}
+            colors={allColors}
+          />
+        </div>
       </Stack>
     )
   }, [subLogs, allColors])
@@ -547,7 +545,7 @@ const Viewer = (): React.ReactElement => {
         onClickUpload={loadLogFromFile}
       />
 
-      <Aside ref={sidePanelRef}>
+      <Aside>
         <StateViewer />
       </Aside>
     </>
