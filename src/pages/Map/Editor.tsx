@@ -5,6 +5,8 @@ import React, { useEffect, useState, useCallback, useMemo } from "react"
 import Point from "../../components/Point"
 import EditorButtons from "./Controls/EditorButtons"
 import { jsonToBlob, saveFile } from "../../helpers/fileInteracts"
+import { randomDarkColor } from "../../helpers/colors"
+import UnionSet from "../../helpers/unionSet"
 
 import { CustomOverlayMap, useMap, Polyline } from "react-kakao-maps-sdk"
 
@@ -51,14 +53,43 @@ const Editor = (): React.ReactElement => {
   const [selected, setSelected] = useState<Array<string>>([])
   const [cursorPos, setCursorPos] = useState<NodeType>()
 
+  const [_visibleEdges, _setVisibleEdges] = useState<EdgeType[]>([])
+  const [graphColors, setGraphColors] = useState<Map<string, string>>(new Map())
+
   const visibleEdges = useMemo((): Array<EdgeType> => {
-    console.log(bufNodes, edges)
-    return edges.filter(({ from, to }: EdgeType) => {
+    console.log("_visibleEdges", _visibleEdges)
+    return _visibleEdges.map((edge: EdgeType) => {
+      const { from, to } = edge
+      return edge
+    })
+  }, [_visibleEdges])
+
+  useEffect(() => {
+    const union = new UnionSet(bufNodes)
+    const _edges = edges.filter(({ from, to }: EdgeType) => {
       for (const { key } of bufNodes) {
         if (from === key || to === key) return true
       }
       return false
     })
+    // console.log(bufNodes, _edges)
+    for (const e of _edges) {
+      union.merge(e.from, e.to)
+    }
+    const colorMap = new Map<string, string>()
+    const groupColors = new Map<string, string>()
+    for (const key of union.keys()) {
+      groupColors.set(key as string, randomDarkColor())
+    }
+    for (const { from, to } of _edges) {
+      const a = union.find(from) as string
+      const b = union.find(to) as string
+      colorMap.set(from, groupColors.get(a) as string)
+      colorMap.set(to, groupColors.get(b) as string)
+    }
+    console.log("set graph colors", colorMap)
+    setGraphColors(colorMap)
+    _setVisibleEdges(_edges)
   }, [bufNodes, edges])
 
   const getMapBounds = useCallback(() => {
@@ -337,6 +368,7 @@ const Editor = (): React.ReactElement => {
             >
               <Point
                 id={key}
+                color={graphColors.get(key)}
                 size={6 / level}
                 selected={isSelected(key)}
                 onMouseDown={onMouseDownPoint}
@@ -347,10 +379,18 @@ const Editor = (): React.ReactElement => {
         )}
       </>
     )
-  }, [bufNodes, getMapBounds, isSelected, onMouseDownPoint, onMouseUpPoint])
+  }, [
+    bufNodes,
+    graphColors,
+    getMapBounds,
+    isSelected,
+    onMouseDownPoint,
+    onMouseUpPoint,
+  ])
 
-  const EdgeLines = useCallback(
-    (): React.ReactElement => (
+  const EdgeLines = useCallback((): React.ReactElement => {
+    console.log("graph colors", graphColors)
+    return (
       <>
         {visibleEdges.map(({ from, to }: EdgeType): React.ReactElement => {
           const path: Array<any> = [from, to]
@@ -367,16 +407,15 @@ const Editor = (): React.ReactElement => {
                 lng,
               }))}
               strokeWeight={3}
-              strokeColor="#db4040"
+              strokeColor={graphColors.get(from)}
               strokeOpacity={1}
               strokeStyle="solid"
             />
           )
         })}
       </>
-    ),
-    [visibleEdges, getNode, isNodeVisible]
-  )
+    )
+  }, [visibleEdges, graphColors, getNode, isNodeVisible])
 
   const fitMapBound = useCallback(
     (nodes: NodeType[]) => {
