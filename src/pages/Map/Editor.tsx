@@ -65,15 +65,18 @@ const Editor = (): React.ReactElement => {
   }, [_visibleEdges])
 
   useEffect(() => {
-    const union = new UnionSet(bufNodes)
     const _edges = edges.filter(({ from, to }: EdgeType) => {
       for (const { key } of bufNodes) {
         if (from === key || to === key) return true
       }
       return false
     })
-    // console.log(bufNodes, _edges)
-    for (const e of _edges) {
+    _setVisibleEdges(_edges)
+  }, [bufNodes, edges])
+
+  useEffect(() => {
+    const union = new UnionSet(nodes)
+    for (const e of edges) {
       union.merge(e.from, e.to)
     }
     const colorMap = new Map<string, string>()
@@ -81,7 +84,7 @@ const Editor = (): React.ReactElement => {
     for (const key of union.keys()) {
       groupColors.set(key as string, randomDarkColor())
     }
-    for (const { from, to } of _edges) {
+    for (const { from, to } of edges) {
       const a = union.find(from) as string
       const b = union.find(to) as string
       colorMap.set(from, groupColors.get(a) as string)
@@ -89,8 +92,7 @@ const Editor = (): React.ReactElement => {
     }
     console.log("set graph colors", colorMap)
     setGraphColors(colorMap)
-    _setVisibleEdges(_edges)
-  }, [bufNodes, edges])
+  }, [nodes, edges])
 
   const getMapBounds = useCallback(() => {
     const bounds = map.getBounds()
