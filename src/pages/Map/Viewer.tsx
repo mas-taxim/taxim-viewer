@@ -15,6 +15,7 @@ import LocalTaxiIcon from "@mui/icons-material/LocalTaxi"
 import HailIcon from "@mui/icons-material/Hail"
 import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown"
 import { Divider, Stack, Typography } from "@mui/joy"
+import MuiTooltip from "@mui/joy/Tooltip"
 
 import { CustomOverlayMap, useMap } from "react-kakao-maps-sdk"
 
@@ -65,24 +66,31 @@ const LogIcon = ({
   color,
   style,
   children,
+  tooltip = null,
   onClick,
-}: any): React.ReactElement => (
-  <div
-    style={{
-      backgroundColor: color || "black",
-      display: "flex",
-      justifyItems: "center",
-      alignItems: "center",
-      width: "32px",
-      height: "32px",
-      borderRadius: "6rem",
-      ...style,
-    }}
-    onClick={onClick || null}
-  >
-    <>{children}</>
-  </div>
-)
+}: any): React.ReactElement => {
+  const [isHover, setHover] = useState<boolean>(false)
+  return (
+    <div
+      style={{
+        backgroundColor: color || "black",
+        display: "flex",
+        justifyItems: "center",
+        alignItems: "center",
+        width: "32px",
+        height: "32px",
+        borderRadius: "6rem",
+        ...style,
+      }}
+      onMouseOver={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onClick={onClick || null}
+    >
+      <>{children}</>
+      <>{tooltip != null && isHover && tooltip}</>
+    </div>
+  )
+}
 
 const VehicleLogInfoStyled = styled.div`
   width: calc(100% - 12px);
@@ -100,6 +108,25 @@ const RoadLineStyled = styled.div`
   background-color: #efefef;
   border-radius: 1em;
   z-index: 0;
+`
+
+const VehicleIconTooltipStyled = styled.div`
+  position: absolute;
+  bottom: calc(-32px / 2 - -8px);
+  font-size: 12px;
+  left: calc(32px / 2);
+  width: fit-content;
+  white-space: nowrap;
+  word-break: keep-all;
+  background: ${({ color }: any) => color};
+  color: white;
+  border-radius: 3px;
+  padding: 2px 6px;
+  box-sizing: border-box;
+  min-width: 32px;
+  transform: translateX(-50%);
+  text-align: center;
+  box-shadow: 0 0 3px rgba(128, 128, 128, 0.2);
 `
 
 type DisplayIconProps = {
@@ -403,6 +430,13 @@ const Viewer = (): React.ReactElement => {
 
   const LogItemVehicleWithTask = ({ vehicle, tasks, colors }: LogItemProps) => {
     const { name: vehicle_id, lat, lng, allocated_id } = vehicle
+
+    const vehicleTooltip = (
+      <VehicleIconTooltipStyled color={colors[vehicle_id]}>
+        {vehicle_id}
+      </VehicleIconTooltipStyled>
+    )
+
     if (tasks.length < 1) {
       const IconEmptyStyle = {
         backgroundColor: "transparent",
@@ -449,6 +483,7 @@ const Viewer = (): React.ReactElement => {
                     borderColor: colors[vehicle_id],
                     borderStyle: "dashed",
                   }}
+                  tooltip={vehicleTooltip}
                 >
                   <Icon
                     type={MarkerType.VEHICLE}
@@ -554,6 +589,7 @@ const Viewer = (): React.ReactElement => {
                 cursor: "pointer",
                 zIndex: 1,
               }}
+              tooltip={vehicleTooltip}
               onClick={() => {
                 focusTo({
                   lat,
@@ -688,7 +724,7 @@ const Viewer = (): React.ReactElement => {
       {markerPositions.map(
         ({ key, color, size, lat, lng, type }: MarkerPosition) => (
           <CustomOverlayMap
-            key={key}
+            key={`marker-${key}`}
             position={{
               lat,
               lng,
