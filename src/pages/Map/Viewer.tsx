@@ -402,7 +402,7 @@ const Viewer = (): React.ReactElement => {
   }
 
   const LogItemVehicleWithTask = ({ vehicle, tasks, colors }: LogItemProps) => {
-    const { name, lat, lng, allocated_id } = vehicle
+    const { name: vehicle_id, lat, lng, allocated_id } = vehicle
     if (tasks.length < 1) {
       const IconEmptyStyle = {
         backgroundColor: "transparent",
@@ -412,43 +412,75 @@ const Viewer = (): React.ReactElement => {
       }
       return (
         <>
-          <LogInfoStyled className="pairs" key={`log-info-${name}`}>
+          <LogInfoStyled className="pairs" key={`log-info-${vehicle_id}`}>
             <LogIcon
               color={"transparent"}
               style={{
                 justifySelf: "flex-start",
                 ...IconEmptyStyle,
               }}
-            >
-              <Icon
-                type={MarkerType.PERSON_PICK}
+            />
+            <VehicleLogInfoStyled>
+              <RoadLineStyled
                 style={{
-                  margin: "0 auto",
+                  borderTop: `dashed 2px ${colors[vehicle_id]}`,
+                  height: "auto",
+                  background: "transparent",
+                  borderRadius: 0,
                 }}
               />
-            </LogIcon>
-
+              <div
+                style={{
+                  position: "absolute",
+                  width: "calc(100% - 32px)",
+                  top: 0,
+                }}
+              >
+                <LogIcon
+                  key={`logicon-${vehicle_id}`}
+                  color={colors[vehicle_id]}
+                  style={{
+                    position: "absolute",
+                    left: "50%",
+                    transition: "all 300ms ease",
+                    zIndex: 1,
+                    backgroundColor: "white",
+                    borderWidth: "1px",
+                    borderColor: colors[vehicle_id],
+                    borderStyle: "dashed",
+                  }}
+                >
+                  <Icon
+                    type={MarkerType.VEHICLE}
+                    style={{
+                      margin: "0 auto",
+                      fill: colors[vehicle_id],
+                    }}
+                  />
+                </LogIcon>
+              </div>
+            </VehicleLogInfoStyled>
             <LogIcon
               color={"transparent"}
               style={{
                 justifySelf: "flex-end",
                 ...IconEmptyStyle,
               }}
-            >
-              <Icon
-                type={MarkerType.PERSON_DROP}
-                style={{
-                  margin: "0 auto",
-                }}
-              />
-            </LogIcon>
+            />
           </LogInfoStyled>
         </>
       )
     }
+
     const task = tasks[0]
-    const { id, status, pick_lat, pick_lng, drop_lat, drop_lng }: TaskType =
-      task as TaskType
+    const {
+      id: task_id,
+      status,
+      pick_lat,
+      pick_lng,
+      drop_lat,
+      drop_lng,
+    }: TaskType = task as TaskType
 
     const isPicked = status > 5
     const isDroped = status > 6
@@ -456,7 +488,7 @@ const Viewer = (): React.ReactElement => {
     const IconReadyStyle = {
       backgroundColor: "transparent",
       borderWidth: "1px",
-      borderColor: colors[id],
+      borderColor: colors[vehicle_id],
       borderStyle: "dashed",
     }
 
@@ -467,13 +499,13 @@ const Viewer = (): React.ReactElement => {
     }
 
     const IconReadyInnerStyle = {
-      fill: colors[id],
+      fill: colors[vehicle_id],
     }
 
     return (
-      <LogInfoStyled className="pairs" key={`log-info-${id}`}>
+      <LogInfoStyled className="pairs" key={`log-info-${vehicle_id}`}>
         <LogIcon
-          color={status <= 5 ? "transparent" : colors[id]}
+          color={status <= 5 ? "transparent" : colors[vehicle_id]}
           style={{
             justifySelf: "flex-start",
             cursor: "pointer",
@@ -496,7 +528,7 @@ const Viewer = (): React.ReactElement => {
         </LogIcon>
         <VehicleLogInfoStyled>
           <RoadLineStyled
-            style={isPicked ? { backgroundColor: colors[id] } : {}}
+            style={isPicked ? { backgroundColor: colors[vehicle_id] } : {}}
           />
           <div
             style={{
@@ -506,8 +538,8 @@ const Viewer = (): React.ReactElement => {
             }}
           >
             <LogIcon
-              key={`logicon-name`}
-              color={colors[name]}
+              key={`logicon-${vehicle_id}`}
+              color={colors[vehicle_id]}
               style={{
                 position: "absolute",
                 left: `${get_slope_weight(
@@ -539,7 +571,7 @@ const Viewer = (): React.ReactElement => {
           </div>
         </VehicleLogInfoStyled>
         <LogIcon
-          color={colors[id]}
+          color={colors[vehicle_id]}
           style={{
             justifySelf: "flex-end",
             cursor: "pointer",
