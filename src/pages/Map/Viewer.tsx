@@ -44,6 +44,13 @@ interface ColorName {
   [key: string]: string
 }
 
+type VehicleState = {
+  name: string
+  lat: number
+  lng: number
+  allocated_id: number | null
+}
+
 type TaskType = {
   id: number
   drop_lat: number
@@ -153,6 +160,9 @@ const Viewer = (): React.ReactElement => {
   const [progressCurrent, setProgressCurrent] = useState<number>(0)
   const [allColors, setColors] = useState<ColorName>({})
   const [logs, setLogs] = useState<Array<any>>([])
+  const [vehiclesState, setVehiclesState] = useState<Map<string, VehicleState>>(
+    new Map()
+  )
 
   useEffect(() => {
     const { logs } = status as StatusState
@@ -222,9 +232,44 @@ const Viewer = (): React.ReactElement => {
         .filter((value) => value !== null)
 
       setMarkerPositions([...vMarkers, ...tMarkers])
+      setVehiclesState((prev: Map<string, VehicleState>) => {
+        const newState = new Map(prev)
+        for (const vehicle of Array.from(vehicles || [])) {
+          const { name } = vehicle as VehicleState
+          newState.set(name, vehicle as VehicleState)
+        }
+        return newState
+      })
     },
     [logs, allColors]
   )
+
+  useEffect(() => {
+    if (!logs) return
+    setVehiclesState((prev: Map<string, VehicleState>) => {
+      const nameCollected: string[] = Array.from(
+        new Set<string>(
+          logs
+            .map(({ vehicles }: any) =>
+              vehicles.map((v: any): string => v.name || "")
+            )
+            .reduce((prev, curr) => [...prev, ...curr], [])
+        )
+      )
+
+      const newMap = new Map(prev)
+      for (const name of nameCollected) {
+        // add empty values having name only
+        newMap.set(name, {
+          name,
+          lat: -1,
+          lng: -1,
+          allocated_id: null,
+        } as VehicleState)
+      }
+      return newMap
+    })
+  }, [logs])
 
   useEffect(() => {
     displayTimeAt(progressCurrent)
@@ -350,149 +395,198 @@ const Viewer = (): React.ReactElement => {
     [map]
   )
 
+  type LogItemProps = {
+    vehicle: VehicleState
+    tasks: TaskType[]
+    colors: ColorName
+  }
+
+  const LogItemVehicleWithTask = ({ vehicle, tasks, colors }: LogItemProps) => {
+    const { name, lat, lng, allocated_id } = vehicle
+    if (tasks.length < 1) {
+      const IconEmptyStyle = {
+        backgroundColor: "transparent",
+        borderWidth: "1px",
+        borderColor: "gray",
+        borderStyle: "dashed",
+      }
+      return (
+        <>
+          <LogInfoStyled className="pairs" key={`log-info-${name}`}>
+            <LogIcon
+              color={"transparent"}
+              style={{
+                justifySelf: "flex-start",
+                ...IconEmptyStyle,
+              }}
+            >
+              <Icon
+                type={MarkerType.PERSON_PICK}
+                style={{
+                  margin: "0 auto",
+                }}
+              />
+            </LogIcon>
+
+            <LogIcon
+              color={"transparent"}
+              style={{
+                justifySelf: "flex-end",
+                ...IconEmptyStyle,
+              }}
+            >
+              <Icon
+                type={MarkerType.PERSON_DROP}
+                style={{
+                  margin: "0 auto",
+                }}
+              />
+            </LogIcon>
+          </LogInfoStyled>
+        </>
+      )
+    }
+    const task = tasks[0]
+    const { id, status, pick_lat, pick_lng, drop_lat, drop_lng }: TaskType =
+      task as TaskType
+
+    const isPicked = status > 5
+    const isDroped = status > 6
+
+    const IconReadyStyle = {
+      backgroundColor: "transparent",
+      borderWidth: "1px",
+      borderColor: colors[id],
+      borderStyle: "dashed",
+    }
+
+    const IconNotReadyStyle = {
+      borderWidth: "1px",
+      borderColor: "transparent",
+      borderStyle: "solid",
+    }
+
+    const IconReadyInnerStyle = {
+      fill: colors[id],
+    }
+
+    return (
+      <LogInfoStyled className="pairs" key={`log-info-${id}`}>
+        <LogIcon
+          color={status <= 5 ? "transparent" : colors[id]}
+          style={{
+            justifySelf: "flex-start",
+            cursor: "pointer",
+            ...(isPicked ? IconNotReadyStyle : IconReadyStyle),
+          }}
+          onClick={() => {
+            focusTo({
+              lat: pick_lat,
+              lng: pick_lng,
+            })
+          }}
+        >
+          <Icon
+            type={MarkerType.PERSON_PICK}
+            style={{
+              margin: "0 auto",
+              ...(isPicked ? {} : IconReadyInnerStyle),
+            }}
+          />
+        </LogIcon>
+        <VehicleLogInfoStyled>
+          <RoadLineStyled
+            style={isPicked ? { backgroundColor: colors[id] } : {}}
+          />
+          <div
+            style={{
+              position: "absolute",
+              width: "calc(100% - 32px)",
+              top: 0,
+            }}
+          >
+            <LogIcon
+              key={`logicon-name`}
+              color={colors[name]}
+              style={{
+                position: "absolute",
+                left: `${get_slope_weight(
+                  pick_lat,
+                  pick_lng,
+                  drop_lat,
+                  drop_lng,
+                  lat,
+                  lng
+                )}%`,
+                transition: "all 300ms ease",
+                cursor: "pointer",
+                zIndex: 1,
+              }}
+              onClick={() => {
+                focusTo({
+                  lat,
+                  lng,
+                })
+              }}
+            >
+              <Icon
+                type={MarkerType.VEHICLE}
+                style={{
+                  margin: "0 auto",
+                }}
+              />
+            </LogIcon>
+          </div>
+        </VehicleLogInfoStyled>
+        <LogIcon
+          color={colors[id]}
+          style={{
+            justifySelf: "flex-end",
+            cursor: "pointer",
+            ...(isDroped ? IconNotReadyStyle : IconReadyStyle),
+          }}
+          onClick={() => {
+            focusTo({
+              lat: drop_lat,
+              lng: drop_lng,
+            })
+          }}
+        >
+          <Icon
+            type={MarkerType.PERSON_DROP}
+            style={{
+              margin: "0 auto",
+              ...(isDroped ? {} : IconReadyInnerStyle),
+            }}
+          />
+        </LogIcon>
+      </LogInfoStyled>
+    )
+  }
+
   const LogInfo = useCallback(
     ({ time, vehicles, tasks, colors }: any) => {
       return (
         <>
-          {vehicles
-            .filter(({ allocated_id }: any) => allocated_id != null)
-            .sort((a: any, b: any) => {
-              const prev = `${a.lat}-${b.lat}`
-              const next = `${a.lng}-${b.lng}`
-              if (prev < next) return -1
-              return prev === next ? 0 : 1
-            })
-            .map(({ name, lat, lng, allocated_id }: any) => {
-              const task = Array.from(tasks || []).filter(
+          {Array.from(vehicles.values())
+            .map((value) => value as VehicleState)
+            .map((thisVehicle: VehicleState) => {
+              const { name, lat, lng, allocated_id } = thisVehicle
+              const thisTasks = Array.from(tasks || []).filter(
                 ({ id }: any) => id === allocated_id
               )
-              if (task.length < 1) return null
-              const {
-                id,
-                status,
-                pick_lat,
-                pick_lng,
-                drop_lat,
-                drop_lng,
-              }: TaskType = task[0] as TaskType
-
-              const isPicked = status > 5
-              const isDroped = status > 6
-
-              const IconReadyStyle = {
-                backgroundColor: "transparent",
-                borderWidth: "1px",
-                borderColor: colors[id],
-                borderStyle: "dashed",
-              }
-
-              const IconNotReadyStyle = {
-                borderWidth: "1px",
-                borderColor: "transparent",
-                borderStyle: "solid",
-              }
-
-              const IconReadyInnerStyle = {
-                fill: colors[id],
-              }
-
               return (
-                <LogInfoStyled className="pairs" key={`log-info-${id}`}>
-                  <LogIcon
-                    color={status <= 5 ? "transparent" : colors[id]}
-                    style={{
-                      justifySelf: "flex-start",
-                      cursor: "pointer",
-                      ...(isPicked ? IconNotReadyStyle : IconReadyStyle),
-                    }}
-                    onClick={() => {
-                      focusTo({
-                        lat: pick_lat,
-                        lng: pick_lng,
-                      })
-                    }}
-                  >
-                    <Icon
-                      type={MarkerType.PERSON_PICK}
-                      style={{
-                        margin: "0 auto",
-                        ...(isPicked ? {} : IconReadyInnerStyle),
-                      }}
-                    />
-                  </LogIcon>
-                  <VehicleLogInfoStyled>
-                    <RoadLineStyled
-                      style={isPicked ? { backgroundColor: colors[id] } : {}}
-                    />
-                    <div
-                      style={{
-                        position: "absolute",
-                        width: "calc(100% - 32px)",
-                        top: 0,
-                      }}
-                    >
-                      <LogIcon
-                        key={`logicon-name`}
-                        color={colors[name]}
-                        style={{
-                          position: "absolute",
-                          left: `${get_slope_weight(
-                            pick_lat,
-                            pick_lng,
-                            drop_lat,
-                            drop_lng,
-                            lat,
-                            lng
-                          )}%`,
-                          transition: "all 300ms ease",
-                          cursor: "pointer",
-                          zIndex: 1,
-                        }}
-                        onClick={() => {
-                          focusTo({
-                            lat,
-                            lng,
-                          })
-                        }}
-                      >
-                        <Icon
-                          type={MarkerType.VEHICLE}
-                          style={{
-                            margin: "0 auto",
-                          }}
-                        />
-                      </LogIcon>
-                    </div>
-                  </VehicleLogInfoStyled>
-                  <LogIcon
-                    color={colors[id]}
-                    style={{
-                      justifySelf: "flex-end",
-                      cursor: "pointer",
-                      ...(isDroped ? IconNotReadyStyle : IconReadyStyle),
-                    }}
-                    onClick={() => {
-                      focusTo({
-                        lat: drop_lat,
-                        lng: drop_lng,
-                      })
-                    }}
-                  >
-                    <Icon
-                      type={MarkerType.PERSON_DROP}
-                      style={{
-                        margin: "0 auto",
-                        ...(isDroped ? {} : IconReadyInnerStyle),
-                      }}
-                    />
-                  </LogIcon>
-                </LogInfoStyled>
+                <LogItemVehicleWithTask
+                  vehicle={thisVehicle}
+                  tasks={thisTasks as TaskType[]}
+                  colors={colors}
+                />
               )
             })}
         </>
       )
     },
-    [focusTo]
+    [focusTo, vehiclesState]
   )
 
   const [subLogs, setSubLogs] = useState<Array<any>>([])
@@ -532,7 +626,7 @@ const Viewer = (): React.ReactElement => {
       )
     }
     const latestLog = subLogs[subLogs.length - 1]
-    const { time, vehicles, tasks } = latestLog
+    const { time, tasks } = latestLog
     return (
       <Stack spacing={1}>
         <div key={`log-${time}`}>
@@ -548,14 +642,14 @@ const Viewer = (): React.ReactElement => {
           </Divider>
           <LogInfo
             time={time}
-            vehicles={vehicles}
+            vehicles={vehiclesState}
             tasks={tasks}
             colors={allColors}
           />
         </div>
       </Stack>
     )
-  }, [subLogs, allColors])
+  }, [subLogs, allColors, vehiclesState])
 
   return (
     <>
