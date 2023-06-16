@@ -1,9 +1,11 @@
-import React, { useState, useCallback, useRef } from "react"
+import React, { useState, useCallback, useRef, useEffect } from "react"
 
 import { Slider, Menu, MenuItem } from "@mui/joy"
 import UploadIcon from "@mui/icons-material/Upload"
 import PlayArrowIcon from "@mui/icons-material/PlayArrow"
 import PauseIcon from "@mui/icons-material/Pause"
+import KeyboardDoubleArrowUpIcon from "@mui/icons-material/KeyboardDoubleArrowUp"
+import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown"
 
 import IconButton from "../../../components/IconButton"
 import SlowMotionVideoIcon from "@mui/icons-material/SlowMotionVideo"
@@ -121,6 +123,7 @@ type ViewerButtonsProps = {
   onProgressUpdated: (progress: number) => void
   onClickPlay: () => void
   onClickUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
+  onClickExpand: (expand: boolean) => void
 } & SpeedControlProps
 
 const ViewerButtons = ({
@@ -133,7 +136,10 @@ const ViewerButtons = ({
   onProgressUpdated,
   onClickPlay,
   onClickUpload,
+  onClickExpand,
 }: ViewerButtonsProps): React.ReactElement => {
+  const [isExpanded, setExpanded] = useState<boolean>(true)
+
   const PlayControlButton = useCallback((): React.ReactElement => {
     return running ? (
       <MenuButton title="일시정지" onClick={onClickPlay} icon={<PauseIcon />} />
@@ -180,6 +186,30 @@ const ViewerButtons = ({
     )
   }, [onClickUpload])
 
+  const ExpandButton = useCallback((): React.ReactElement => {
+    return (
+      <>
+        <MenuButton
+          title={isExpanded ? "닫기" : "자세히 보기"}
+          icon={
+            isExpanded ? (
+              <KeyboardDoubleArrowDownIcon />
+            ) : (
+              <KeyboardDoubleArrowUpIcon />
+            )
+          }
+          onClick={() => {
+            setExpanded((prev) => !prev)
+          }}
+        />
+      </>
+    )
+  }, [setExpanded, isExpanded])
+
+  useEffect(() => {
+    onClickExpand(isExpanded)
+  }, [isExpanded, onClickExpand])
+
   return (
     <>
       <HorizontalContainer position="bottom">
@@ -217,6 +247,8 @@ const ViewerButtons = ({
             }}
           />
         </SliderWrapperStyled>
+        <Divider />
+        <ExpandButton />
       </HorizontalContainer>
     </>
   )

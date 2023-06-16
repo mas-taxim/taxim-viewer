@@ -174,13 +174,16 @@ const get_slope_weight = (
   return Math.max(0.0, Math.min(r * 100.0, 100.0))
 }
 
-const ViewerBottomFixedWrapperStyled = styled.div`
+const ViewerBottomFixedWrapperStyled = styled.div<{ expand: boolean }>`
   position: fixed;
   width: 100%;
   bottom: 0;
   left: 0;
   background: #cc999999;
   height: 300px;
+  transform: ${({ expand }: any) =>
+    expand ? "translateY(0px)" : "translateY(300px)"};
+  transition: transform 300ms ease-in-out;
 `
 
 const ViewerButtonsClearStyled = styled.div`
@@ -733,6 +736,8 @@ const Viewer = (): React.ReactElement => {
     )
   }, [subLogs, allColors, vehiclesState])
 
+  const [isExpandTimeline, setExpanedTimeline] = useState<boolean>(true)
+
   return (
     <>
       {markerPositions.map(
@@ -756,7 +761,7 @@ const Viewer = (): React.ReactElement => {
         )
       )}
 
-      <ViewerBottomFixedWrapperStyled>
+      <ViewerBottomFixedWrapperStyled expand={isExpandTimeline}>
         <ViewerButtonsClearStyled>
           <ViewerButtons
             running={running}
@@ -768,6 +773,7 @@ const Viewer = (): React.ReactElement => {
             onProgressUpdated={setProgressCurrent}
             onClickPlay={() => setRunning(!running)}
             onClickUpload={loadLogFromFile}
+            onClickExpand={setExpanedTimeline}
           />
         </ViewerButtonsClearStyled>
       </ViewerBottomFixedWrapperStyled>
