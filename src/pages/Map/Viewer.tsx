@@ -185,11 +185,20 @@ const ViewerBottomFixedWrapperStyled = styled.div<{ expand: boolean }>`
   transform: ${({ expand }: any) =>
     expand ? "translateY(0px)" : "translateY(300px)"};
   transition: transform 300ms ease-in-out;
+  box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.2);
 `
 
 const ViewerButtonsClearStyled = styled.div`
   position: relative;
   width: 100%;
+`
+
+const TimelineWrapperStyled = styled.div`
+  position: absolute;
+  overflow: auto;
+  width: 100%;
+  height: 100%;
+  bottom: 0;
 `
 
 const Viewer = (): React.ReactElement => {
@@ -777,7 +786,9 @@ const Viewer = (): React.ReactElement => {
             onClickExpand={setExpanedTimeline}
           />
         </ViewerButtonsClearStyled>
-        <Timeline />
+        <TimelineWrapperStyled>
+          <Timeline />
+        </TimelineWrapperStyled>
       </ViewerBottomFixedWrapperStyled>
 
       <Aside>
