@@ -174,6 +174,20 @@ const get_slope_weight = (
   return Math.max(0.0, Math.min(r * 100.0, 100.0))
 }
 
+const ViewerBottomFixedWrapperStyled = styled.div`
+  position: fixed;
+  width: 100%;
+  bottom: 0;
+  left: 0;
+  background: #cc999999;
+  height: 300px;
+`
+
+const ViewerButtonsClearStyled = styled.div`
+  position: relative;
+  width: 100%;
+`
+
 const Viewer = (): React.ReactElement => {
   const [markerPositions, setMarkerPositions] = useState<Array<MarkerPosition>>(
     []
@@ -741,17 +755,22 @@ const Viewer = (): React.ReactElement => {
           </CustomOverlayMap>
         )
       )}
-      <ViewerButtons
-        running={running}
-        runable={runable}
-        progressMax={progressMax}
-        progressCurrent={progressCurrent}
-        speed={speed}
-        onSelectSpeed={setSpeed}
-        onProgressUpdated={setProgressCurrent}
-        onClickPlay={() => setRunning(!running)}
-        onClickUpload={loadLogFromFile}
-      />
+
+      <ViewerBottomFixedWrapperStyled>
+        <ViewerButtonsClearStyled>
+          <ViewerButtons
+            running={running}
+            runable={runable}
+            progressMax={progressMax}
+            progressCurrent={progressCurrent}
+            speed={speed}
+            onSelectSpeed={setSpeed}
+            onProgressUpdated={setProgressCurrent}
+            onClickPlay={() => setRunning(!running)}
+            onClickUpload={loadLogFromFile}
+          />
+        </ViewerButtonsClearStyled>
+      </ViewerBottomFixedWrapperStyled>
 
       <Aside>
         <StateViewer />
