@@ -1,11 +1,25 @@
-import React, { useCallback, useState, useEffect, CSSProperties } from "react"
+import React, {
+  useCallback,
+  useState,
+  useEffect,
+  CSSProperties,
+  useMemo,
+} from "react"
 // @ts-ignore
 import ExternalTimeline from "react-timelines"
 import "react-timelines/lib/css/style.css"
 import "./timeline-overrides.css"
 
-const EXAMPLE_JSON_URL =
-  "https://gist.githubusercontent.com/joonas-yoon/4007b06b09685baaa4a456d3eb236e5a/raw/ae8044bf161a08317a38db9d9f35253b1112cfce/example_schedules.json"
+const SERVER_HOST = process.env.REACT_APP_SERVER_HOST as string
+const TIMEZONE_OFFSET = new Date().getTimezoneOffset() * 60 * 1000
+const START_YEAR = 2020
+const START_MONTH = 8
+const START_DAY = 29
+const START_HOURS = 6
+const START_MINUTES = 0
+const TICKS_MS = 500
+const STEP_JUMP_MINS = 30
+const COLUMN_GAP = (3600 * 1000) / 2 // 1 hour
 
 type ServerScheduleTimeType = {
   load_time: string
@@ -32,10 +46,6 @@ type HeaderCellType = {
   end: Date
 }
 
-type TimelineTrackType = HeaderCellType & {
-  style?: CSSProperties
-}
-
 const DEFAULT_TRACK_STYLE: CSSProperties = {
   backgroundColor: "#dcdc33",
   color: "#1f1f1f",
@@ -59,7 +69,7 @@ const createTracksByVehicle = ({
         unload_time,
       }: ServerScheduleTimeType) => ({
         id: `${vehicle_id}-track-${task_id}`,
-        title: `${task_id}`,
+        title: `#${task_id}`,
         start: new Date(start_time),
         end: new Date(unload_time),
         style: { ...DEFAULT_TRACK_STYLE, color: "white" },
@@ -69,77 +79,140 @@ const createTracksByVehicle = ({
   }
 }
 
+type TimeRange = {
+  start: Date
+  current: Date
+  end: Date
+}
+
+const timedelta = (date: Date, delta: number): Date =>
+  new Date(date.getTime() + delta)
+
 const Timeline = () => {
   const [snapshot, setSnapshot] = useState<SnapshotType>()
+  const [range, setRange] = useState<TimeRange>({
+    start: new Date(),
+    current: new Date(),
+    end: new Date(),
+  })
+  const [mins, setMinutes] = useState<number>(START_HOURS * 60 + START_MINUTES)
+  const [terminated, setTerminated] = useState<boolean>(false)
+
+  const stepable = (minutes: number): boolean => {
+    const startDate = new Date(START_YEAR, START_MONTH - 1, START_DAY)
+    const curDate = timedelta(startDate, minutes * 60 * 1000)
+    return startDate.toLocaleDateString() == curDate.toLocaleDateString()
+  }
+
+  // step minute after TICKS if possible
+  useEffect(() => {
+    let timer: any = null
+    if (!terminated)
+      setTimeout(() => {
+        setMinutes(
+          (currentMin: number) =>
+            currentMin +
+            (stepable(currentMin + STEP_JUMP_MINS) ? STEP_JUMP_MINS : 0)
+        )
+      }, TICKS_MS)
+    return () => {
+      if (timer) clearTimeout(timer)
+    }
+  }, [mins, terminated])
+
+  const fetchSnapshot = useCallback(
+    (
+      year: number,
+      month: number,
+      day: number,
+      hour: number,
+      vehicles: number,
+      tasks: number
+    ) =>
+      fetch(
+        `${SERVER_HOST}/schedule/${year}/${month}/${day}/${hour}/${
+          mins % 60
+        }?vehicles=${vehicles}&tasks=${tasks}`
+      )
+        .then((r) => r.json())
+        .catch((e) => {
+          window.alert("Connection failed")
+          console.error(e)
+          setTerminated(true)
+        })
+        .then(setSnapshot),
+    [setTerminated, setSnapshot]
+  )
 
   useEffect(() => {
-    fetch(EXAMPLE_JSON_URL)
-      .then((r) => r.json())
-      .then(setSnapshot)
-  }, [])
+    if (terminated) return
+    const hour = Math.floor(mins / 60)
+    const vehicles = 2
+    const tasks = 20
+    fetchSnapshot(START_YEAR, START_MONTH, START_DAY, hour, vehicles, tasks)
+  }, [mins, terminated, fetchSnapshot])
 
   useEffect(() => {
     console.log("snapshot", snapshot)
+    if (!snapshot) {
+      return
+    }
+    const now = new Date(snapshot.time)
+    setRange({
+      start: timedelta(now, -3 * 3600 * 1000),
+      current: now,
+      end: timedelta(now, 9 * 3600 * 1000),
+    })
   }, [snapshot])
 
-  const TIMEZONE_OFFSET = new Date().getTimezoneOffset() * 60 * 1000
-  const START = new Date("2023-02-02 00:00")
-  const END = new Date("2023-02-03 00:00")
-  const HEADER_INTERVAL = 3600 * 1000 // 1 hour
-  const COLUMNS = (END.getTime() - START.getTime()) / HEADER_INTERVAL
+  const timebar = useMemo(() => {
+    const { start, end } = range
+    const COLUMNS = (end.getTime() - start.getTime()) / COLUMN_GAP
+    console.log("start", start)
+    console.log("end", end)
 
-  const cells: HeaderCellType[] = [...Array(COLUMNS)].map(
-    (_, hour) =>
-      ({
-        id: `id-${hour}`,
-        title: `${hour % 24}시`,
-        start: new Date(START.getTime() + HEADER_INTERVAL * hour),
-        end: new Date(START.getTime() + HEADER_INTERVAL * (hour + 1)),
-      } as HeaderCellType)
+    return [
+      {
+        id: "hour",
+        title: "Hour",
+        cells: [...Array(COLUMNS)].map((_, index) => {
+          const time = timedelta(start, COLUMN_GAP * index)
+          const end = timedelta(time, COLUMN_GAP)
+          const hour = time.getHours()
+          const half = time.getMinutes() > 0 ? " 반" : ""
+          return {
+            id: `id-${time.getTime()}`,
+            title: `${hour % 24}시${half}`,
+            start: time,
+            end,
+          } as HeaderCellType
+        }),
+        useAsGrid: true,
+        style: {},
+      },
+    ]
+  }, [range])
+
+  const Result = useCallback(
+    () =>
+      snapshot && snapshot.logs ? (
+        <ExternalTimeline
+          scale={{
+            start: range.start,
+            end: range.end,
+            zoom: 11,
+          }}
+          timebar={timebar}
+          tracks={snapshot.logs.map(createTracksByVehicle)}
+          now={range.current}
+        />
+      ) : (
+        <>No Data</>
+      ),
+    [snapshot, timebar]
   )
 
-  console.log("cells", cells)
-
-  const timebar = [
-    {
-      id: "hour",
-      title: "Hour",
-      cells: cells,
-      useAsGrid: true,
-      style: {},
-    },
-  ]
-
-  const TimelineRender = useCallback(() => {
-    if (!snapshot) {
-      return <></>
-    }
-
-    const tracks = snapshot.logs.map(createTracksByVehicle)
-    const now = new Date(snapshot.time + TIMEZONE_OFFSET)
-
-    console.log("tracks", tracks)
-    console.log("now", now)
-    console.log("start", START)
-    console.log("end", END)
-
-    return (
-      <ExternalTimeline
-        scale={{
-          start: START,
-          end: END,
-          zoom: 11,
-          zoomMin: 2,
-          zoomMax: 20,
-        }}
-        timebar={timebar}
-        tracks={tracks}
-        now={now}
-      />
-    )
-  }, [snapshot])
-
-  return <TimelineRender />
+  return <Result />
 }
 
 export default Timeline

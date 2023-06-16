@@ -180,7 +180,7 @@ const ViewerBottomFixedWrapperStyled = styled.div<{ expand: boolean }>`
   width: 100%;
   bottom: 0;
   left: 0;
-  background: #cc999999;
+  background: white;
   height: 300px;
   transform: ${({ expand }: any) =>
     expand ? "translateY(0px)" : "translateY(300px)"};
