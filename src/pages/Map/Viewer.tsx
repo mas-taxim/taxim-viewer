@@ -24,6 +24,7 @@ import ViewerButtons from "./Controls/ViewerButtons"
 import { humanizeDate } from "../../helpers/stringFormat"
 import { randomDarkColor } from "../../helpers/colors"
 import styled from "styled-components"
+import Timeline from "./Timeline"
 
 const MarkerType = {
   NONE: -1,
@@ -776,6 +777,7 @@ const Viewer = (): React.ReactElement => {
             onClickExpand={setExpanedTimeline}
           />
         </ViewerButtonsClearStyled>
+        <Timeline />
       </ViewerBottomFixedWrapperStyled>
 
       <Aside>
