@@ -3,10 +3,29 @@
 }
 
 .rt-track-key__toggle {
-    display: none;
+  display: none;
 }
 
 .rt-track-keys > .rt-track-key > .rt-track-key__entry {
-    text-align: right;
-    padding-right: 20px;
+  text-align: right;
+  padding-right: 20px;
+}
+
+.rt-marker--now {
+  margin: 0;
+  z-index: 1;
+  width: 100%;
+  transform: translateX(-100%);
+  border-right-width: 11px;
+  border-right-style: solid;
+  border-right-color: rgba(255, 0, 127, 0.5);
+  background-color: rgba(128, 128, 128, 0.2);
+}
+
+.rt-marker__label {
+  display: none;
+}
+
+.rt-track__element {
+  z-index: 1;
 }
