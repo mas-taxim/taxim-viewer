@@ -18,7 +18,7 @@ const START_MONTH = 8
 const START_DAY = 29
 const START_HOURS = 6
 const START_MINUTES = 0
-const TICKS_MS = 500
+const TICKS_MS = 1000
 const STEP_JUMP_MINS = 30
 const COLUMN_GAP = (3600 * 1000) / 2 // 1 hour
 
@@ -54,6 +54,33 @@ const DEFAULT_TRACK_STYLE: CSSProperties = {
   boxShadow: "1px 1px 0px rgba(0, 0, 0, 0.25)",
 }
 
+const STATUS_FINISHED = 0
+const STATUS_WORKING = 1
+const STATUS_WAITING = 2
+
+const trackStyleByStatus = (status: number): CSSProperties => {
+  if (status === STATUS_FINISHED) {
+    return {
+      color: "white",
+      backgroundColor: "gray",
+      opacity: 0.5,
+    }
+  }
+  if (status === STATUS_WORKING) {
+    return {
+      color: "white",
+      backgroundColor: "#0a6bde",
+    }
+  }
+  if (status === STATUS_WAITING) {
+    return {
+      color: "white",
+      backgroundColor: "#dcdc33",
+    }
+  }
+  return {}
+}
+
 const createTracksByVehicle = ({
   vehicle_id,
   schedules,
@@ -73,7 +100,7 @@ const createTracksByVehicle = ({
         title: `#${task_id}`,
         start: new Date(start_time),
         end: new Date(unload_time),
-        style: { ...DEFAULT_TRACK_STYLE, color: "white" },
+        style: { ...DEFAULT_TRACK_STYLE, ...trackStyleByStatus(status) },
       })
     ),
     tracks: [],
@@ -117,14 +144,20 @@ const Timeline = () => {
   // step minute after TICKS if possible
   useEffect(() => {
     let timer: any = null
-    if (!terminated)
-      setTimeout(() => {
-        setMinutes(
-          (currentMin: number) =>
-            currentMin +
-            (stepable(currentMin + STEP_JUMP_MINS) ? STEP_JUMP_MINS : 0)
-        )
+    if (!terminated) {
+      timer = setTimeout(() => {
+        setMinutes((currentMin: number) => {
+          const nextMin = currentMin + STEP_JUMP_MINS
+          const available = stepable(nextMin)
+          if (!available) {
+            setTerminated(true)
+            return currentMin
+          } else {
+            return nextMin
+          }
+        })
       }, TICKS_MS)
+    }
     return () => {
       if (timer) clearTimeout(timer)
     }
@@ -136,13 +169,12 @@ const Timeline = () => {
       month: number,
       day: number,
       hour: number,
+      minutes: number,
       vehicles: number,
       tasks: number
     ) =>
       fetch(
-        `${SERVER_HOST}/schedule/${year}/${month}/${day}/${hour}/${
-          mins % 60
-        }?vehicles=${vehicles}&tasks=${tasks}`
+        `${SERVER_HOST}/schedule/${year}/${month}/${day}/${hour}/${minutes}?vehicles=${vehicles}&tasks=${tasks}`
       )
         .then((r) => r.json())
         .catch((e) => {
@@ -157,9 +189,18 @@ const Timeline = () => {
   useEffect(() => {
     if (terminated) return
     const hour = Math.floor(mins / 60)
+    const minutes = mins % 60
     const vehicles = 2
-    const tasks = 20
-    fetchSnapshot(START_YEAR, START_MONTH, START_DAY, hour, vehicles, tasks)
+    const tasks = 30
+    fetchSnapshot(
+      START_YEAR,
+      START_MONTH,
+      START_DAY,
+      hour,
+      minutes,
+      vehicles,
+      tasks
+    )
   }, [mins, terminated, fetchSnapshot])
 
   useEffect(() => {
@@ -174,6 +215,7 @@ const Timeline = () => {
       current: now,
       end: timedelta(now, 9 * 3600 * 1000),
     })
+    setTerminated(false)
   }, [snapshot])
 
   const timebar = useMemo(() => {
