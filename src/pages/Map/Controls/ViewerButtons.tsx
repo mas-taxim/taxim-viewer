@@ -119,6 +119,7 @@ type ViewerButtonsProps = {
   runable: boolean
   progressMax: number
   progressCurrent: number
+  expanded: boolean
   onProgressUpdated: (progress: number) => void
   onClickPlay: () => void
   onClickExpand: (expand: boolean) => void
@@ -130,13 +131,12 @@ const ViewerButtons = ({
   progressMax,
   progressCurrent,
   speed,
+  expanded,
   onSelectSpeed,
   onProgressUpdated,
   onClickPlay,
   onClickExpand,
 }: ViewerButtonsProps): React.ReactElement => {
-  const [isExpanded, setExpanded] = useState<boolean>(true)
-
   const PlayControlButton = useCallback((): React.ReactElement => {
     return running ? (
       <MenuButton title="일시정지" onClick={onClickPlay} icon={<PauseIcon />} />
@@ -154,25 +154,21 @@ const ViewerButtons = ({
     return (
       <>
         <MenuButton
-          title={isExpanded ? "닫기" : "자세히 보기"}
+          title={expanded ? "닫기" : "자세히 보기"}
           icon={
-            isExpanded ? (
+            expanded ? (
               <KeyboardDoubleArrowDownIcon />
             ) : (
               <KeyboardDoubleArrowUpIcon />
             )
           }
           onClick={() => {
-            setExpanded((prev) => !prev)
+            onClickExpand(!expanded)
           }}
         />
       </>
     )
-  }, [setExpanded, isExpanded])
-
-  useEffect(() => {
-    onClickExpand(isExpanded)
-  }, [isExpanded, onClickExpand])
+  }, [expanded, onClickExpand])
 
   return (
     <>

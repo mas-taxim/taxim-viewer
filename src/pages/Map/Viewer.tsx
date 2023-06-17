@@ -207,10 +207,10 @@ const TimelineWrapperStyled = styled.div`
 
 const SERVER_HOST = process.env.REACT_APP_SERVER_HOST as string
 
-const INITIAL_DATE = new Date("2020-08-29 10:15")
+const INITIAL_DATE = new Date("2020-08-29 06:00")
 const VEHICLES = 10
 const TASKS = 130
-const JUMP_MINS = 10
+const JUMP_MINS = 5
 
 const parseDate = (t: Date) => ({
   year: t.getFullYear(),
@@ -388,30 +388,13 @@ const Viewer = (): React.ReactElement => {
     [map]
   )
 
+  // fit map bound when first map loaded
   useEffect(() => {
-    if (!log) return
-
-    const { vehicles, tasks } = log
-
-    const positions = vehicles
-      .map(({ lat, lng }: any) => ({ lat, lng }))
-      .concat(
-        ...tasks.map(({ pick_lat, pick_lng, drop_lat, drop_lng }: TaskType) => [
-          {
-            lat: pick_lat,
-            lng: pick_lng,
-          },
-          {
-            lat: drop_lat,
-            lng: drop_lng,
-          },
+    fitMapBound([
+      { lat: 37.6299601, lng: 126.8629739 },
+      { lat: 37.4712457, lng: 127.1006907 },
     ])
-      )
-      .flat()
-
-    setProgressMax(1000)
-    fitMapBound(positions)
-  }, [log, fitMapBound])
+  }, [])
 
   const focusTo = useCallback(
     ({ lat, lng }: any) => {
