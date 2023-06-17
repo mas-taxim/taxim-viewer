@@ -2,13 +2,13 @@ name: Build CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
     inputs:
       tags:
-        description: 'build'
+        description: "build"
 permissions:
   contents: write
 
@@ -30,7 +30,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install modules
         run: npm i
