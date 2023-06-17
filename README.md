@@ -12,6 +12,7 @@ Multi-Agent Reinforcement Learning for Taxi Application
 
 ```bash
 REACT_APP_KAKAO_MAP_API_KEY=<your-api-key>
+REACT_APP_SERVER_HOST=<your-backend-server>
 ```
 
 ## CRAs
