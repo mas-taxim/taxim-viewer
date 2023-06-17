@@ -19,12 +19,17 @@ import MuiTooltip from "@mui/joy/Tooltip"
 
 import { CustomOverlayMap, useMap } from "react-kakao-maps-sdk"
 
-import { useStatusState, StatusState } from "../../providers/StatusProvider"
+import {
+  useStatusState,
+  StatusState,
+  LogFullType,
+} from "../../providers/StatusProvider"
 import ViewerButtons from "./Controls/ViewerButtons"
 import { humanizeDate } from "../../helpers/stringFormat"
 import { randomDarkColor } from "../../helpers/colors"
 import styled from "styled-components"
 import Timeline from "./Timeline"
+import { useDynamicFetch } from "../../hooks"
 
 const MarkerType = {
   NONE: -1,
@@ -201,6 +206,22 @@ const TimelineWrapperStyled = styled.div`
   bottom: 0;
 `
 
+const SERVER_HOST = process.env.REACT_APP_SERVER_HOST as string
+
+const INITIAL_DATE = new Date("2020-08-29 10:15")
+const VEHICLES = 10
+const TASKS = 130
+const JUMP_MINS = 10
+
+const parseDate = (t: Date) => ({
+  year: t.getFullYear(),
+  month: t.getMonth() + 1,
+  day: t.getDate(),
+  hour: t.getHours(),
+  minute: t.getMinutes(),
+  second: t.getSeconds(),
+})
+
 const Viewer = (): React.ReactElement => {
   const [markerPositions, setMarkerPositions] = useState<Array<MarkerPosition>>(
     []
@@ -211,18 +232,38 @@ const Viewer = (): React.ReactElement => {
   const [running, setRunning] = useState<boolean>(false)
   const [speed, setSpeed] = useState<number>(1.0)
   const [progressMax, setProgressMax] = useState<number>(0)
-  const [progressCurrent, setProgressCurrent] = useState<number>(0)
+  const [progress, setProgress] = useState<number>(0)
+  const [elapsedMinutes, setElapsedMinutes] = useState<number>(0)
   const [allColors, setColors] = useState<ColorName>({})
-  const [logs, setLogs] = useState<Array<any>>([])
+  const [log, setLog] = useState<LogFullType | null>()
   const [vehiclesState, setVehiclesState] = useState<Map<string, VehicleState>>(
     new Map()
   )
+  const [responseLog, requestLog] = useDynamicFetch()
+  const [displayTime, setDisplayTime] = useState<Date>(INITIAL_DATE)
 
   useEffect(() => {
-    const { logs } = status as StatusState
-    setRunable(logs && logs.length > 0)
-    setLogs(logs)
-    setProgressCurrent(0)
+    const timeShifted = new Date(
+      INITIAL_DATE.getTime() + elapsedMinutes * 60 * 1000
+    )
+    console.log("elapsed", elapsedMinutes)
+    console.log("time", timeShifted)
+    setDisplayTime(timeShifted)
+    const { year, month, day, hour, minute } = parseDate(timeShifted)
+    const url = `${SERVER_HOST}/log/${year}/${month}/${day}/${hour}/${minute}?vehicles=${VEHICLES}&tasks=${TASKS}`
+    requestLog(url)
+  }, [elapsedMinutes])
+
+  useEffect(() => {
+    const { data, loading, error } = responseLog
+    console.log("log fetched", data)
+    setLog(data as LogFullType)
+  }, [responseLog.data])
+
+  useEffect(() => {
+    const { log: logFull } = status as StatusState
+    setRunable(log !== null)
+    setLog(logFull)
   }, [status])
 
   const map = useMap()
@@ -235,11 +276,11 @@ const Viewer = (): React.ReactElement => {
     map.setLevel(level)
   }, [map, level])
 
-  const displayTimeAt = useCallback(
-    (t: number) => {
-      if (!logs || t >= logs.length) return
+  const display = useCallback(
+    (t: Date) => {
+      if (!log) return
 
-      const { time, vehicles, tasks } = logs[t]
+      const { time, vehicles, tasks } = log
 
       const vMarkers: Array<MarkerPosition> = Array.from(vehicles || []).map(
         ({ name, lat, lng }: any) => ({
@@ -295,20 +336,14 @@ const Viewer = (): React.ReactElement => {
         return newState
       })
     },
-    [logs, allColors]
+    [log, allColors]
   )
 
   useEffect(() => {
-    if (!logs) return
+    if (!log) return
     setVehiclesState((prev: Map<string, VehicleState>) => {
       const nameCollected: string[] = Array.from(
-        new Set<string>(
-          logs
-            .map(({ vehicles }: any) =>
-              vehicles.map((v: any): string => v.name || "")
-            )
-            .reduce((prev, curr) => [...prev, ...curr], [])
-        )
+        new Set<string>(log.vehicles.map((v: any): string => v.name || ""))
       )
 
       const newMap = new Map(prev)
@@ -323,11 +358,7 @@ const Viewer = (): React.ReactElement => {
       }
       return newMap
     })
-  }, [logs])
-
-  useEffect(() => {
-    displayTimeAt(progressCurrent)
-  }, [progressCurrent])
+  }, [log])
 
   useEffect(() => {
     if (!running) return
@@ -339,13 +370,13 @@ const Viewer = (): React.ReactElement => {
     console.log("info", interval, running, speed)
 
     const timer = setTimeout(() => {
-      setProgressCurrent((prev) => prev + 1)
+      setElapsedMinutes((prev) => prev + JUMP_MINS)
     }, interval)
 
     return () => {
       clearTimeout(timer)
     }
-  }, [running, speed, progressCurrent])
+  }, [running, speed, elapsedMinutes])
 
   const fitMapBound = useCallback(
     (nodes: Array<{ lat: number; lng: number }>) => {
@@ -360,47 +391,42 @@ const Viewer = (): React.ReactElement => {
   )
 
   useEffect(() => {
-    if (!logs || logs.length < 1) return
+    if (!log) return
 
-    const positions = logs
-      .map(({ vehicles, tasks }: any) =>
-        vehicles
-          .map(({ lat, lng }: any) => ({ lat, lng }))
-          .concat(
-            ...tasks.map(
-              ({ pick_lat, pick_lng, drop_lat, drop_lng }: TaskType) => [
-                {
-                  lat: pick_lat,
-                  lng: pick_lng,
-                },
-                {
-                  lat: drop_lat,
-                  lng: drop_lng,
-                },
-              ]
-            )
-          )
+    const { vehicles, tasks } = log
+
+    const positions = vehicles
+      .map(({ lat, lng }: any) => ({ lat, lng }))
+      .concat(
+        ...tasks.map(({ pick_lat, pick_lng, drop_lat, drop_lng }: TaskType) => [
+          {
+            lat: pick_lat,
+            lng: pick_lng,
+          },
+          {
+            lat: drop_lat,
+            lng: drop_lng,
+          },
+        ])
       )
       .flat()
 
-    setProgressMax(logs.length - 1)
+    setProgressMax(1000)
     fitMapBound(positions)
-    displayTimeAt(0)
-  }, [logs, fitMapBound, displayTimeAt])
+  }, [log, fitMapBound])
 
   useEffect(() => {
-    if (!logs || logs.length < 1) return
+    if (!log) return
+
+    const { vehicles, tasks } = log
 
     // collect and create pairs of name and color
     const nameKeyValueMap: ColorName = [
       ...Array.from(
         new Set<string>(
-          logs
-            .map(({ vehicles, tasks }: any) =>
-              vehicles
-                .map(({ name }: any) => `${name}`)
-                .concat(tasks.map(({ id }: any) => `${id}`))
-            )
+          vehicles
+            .map(({ name }: any) => `${name}`)
+            .concat(tasks.map(({ id }: any) => `${id}`))
             .flat()
         )
       ),
@@ -420,27 +446,7 @@ const Viewer = (): React.ReactElement => {
       )
 
     setColors(nameKeyValueMap)
-  }, [logs])
-
-  const loadLogFromFile = (evt: React.ChangeEvent<HTMLInputElement>) => {
-    const files = evt.target.files
-    if (!files || files.length < 1) {
-      return
-    }
-    const file = files[0]
-    const reader: FileReader = new FileReader()
-    reader.addEventListener("load", (event: any) => {
-      const result = event.target.result
-      try {
-        const { logs } = JSON.parse(result)
-        setStatus((prev) => ({ ...prev, logs }))
-        displayTimeAt(0)
-      } catch {
-        window.alert("Wrong JSON file format")
-      }
-    })
-    reader.readAsText(file)
-  }
+  }, [log])
 
   const focusTo = useCallback(
     ({ lat, lng }: any) => {
@@ -684,20 +690,8 @@ const Viewer = (): React.ReactElement => {
     [focusTo, vehiclesState]
   )
 
-  const [subLogs, setSubLogs] = useState<Array<any>>([])
-
-  useEffect(() => {
-    if (!logs || logs.length < 1) return
-    const sliced: Array<{
-      time: number
-      vehicles: Array<any>
-      tasks: Array<any>
-    }> = logs.slice(0, progressCurrent + 1)
-    setSubLogs(sliced)
-  }, [logs, progressCurrent])
-
   const StateViewer = useCallback((): React.ReactElement => {
-    if (!subLogs || subLogs.length < 1) {
+    if (!log) {
       return (
         <center
           style={{
@@ -720,8 +714,7 @@ const Viewer = (): React.ReactElement => {
         </center>
       )
     }
-    const latestLog = subLogs[subLogs.length - 1]
-    const { time, tasks } = latestLog
+    const { time, tasks } = log
     return (
       <Stack spacing={1}>
         <div key={`log-${time}`}>
@@ -744,7 +737,7 @@ const Viewer = (): React.ReactElement => {
         </div>
       </Stack>
     )
-  }, [subLogs, allColors, vehiclesState])
+  }, [log, allColors, vehiclesState])
 
   const [isExpandTimeline, setExpanedTimeline] = useState<boolean>(true)
 
@@ -777,17 +770,18 @@ const Viewer = (): React.ReactElement => {
             running={running}
             runable={runable}
             progressMax={progressMax}
-            progressCurrent={progressCurrent}
+            progressCurrent={progress}
             speed={speed}
             onSelectSpeed={setSpeed}
-            onProgressUpdated={setProgressCurrent}
+            onProgressUpdated={(i: number) =>
+              setProgress(elapsedMinutes * JUMP_MINS)
+            }
             onClickPlay={() => setRunning(!running)}
-            onClickUpload={loadLogFromFile}
             onClickExpand={setExpanedTimeline}
           />
         </ViewerButtonsClearStyled>
         <TimelineWrapperStyled>
-          <Timeline year={2020} month={8} day={29} hour={10} minute={30} />
+          <Timeline time={displayTime} />
         </TimelineWrapperStyled>
       </ViewerBottomFixedWrapperStyled>
 

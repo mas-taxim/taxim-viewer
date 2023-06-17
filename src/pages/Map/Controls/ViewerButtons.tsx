@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from "react"
 
 import { Slider, Menu, MenuItem } from "@mui/joy"
-import UploadIcon from "@mui/icons-material/Upload"
 import PlayArrowIcon from "@mui/icons-material/PlayArrow"
 import PauseIcon from "@mui/icons-material/Pause"
 import KeyboardDoubleArrowUpIcon from "@mui/icons-material/KeyboardDoubleArrowUp"
@@ -122,7 +121,6 @@ type ViewerButtonsProps = {
   progressCurrent: number
   onProgressUpdated: (progress: number) => void
   onClickPlay: () => void
-  onClickUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
   onClickExpand: (expand: boolean) => void
 } & SpeedControlProps
 
@@ -135,7 +133,6 @@ const ViewerButtons = ({
   onSelectSpeed,
   onProgressUpdated,
   onClickPlay,
-  onClickUpload,
   onClickExpand,
 }: ViewerButtonsProps): React.ReactElement => {
   const [isExpanded, setExpanded] = useState<boolean>(true)
@@ -152,39 +149,6 @@ const ViewerButtons = ({
       />
     )
   }, [running, runable])
-
-  const UploadButton = useCallback((): React.ReactElement => {
-    const ref = useRef<HTMLInputElement>(null)
-    return (
-      <>
-        <label
-          htmlFor="upload-log"
-          style={{
-            width: "32px",
-          }}
-        >
-          <input
-            ref={ref}
-            style={{ display: "none" }}
-            id="upload-log"
-            name="upload-log"
-            type="file"
-            accept=".json,application/json"
-            onChange={onClickUpload}
-          />
-          <MenuButton
-            title="업로드"
-            icon={<UploadIcon />}
-            onClick={() => {
-              if (ref.current) {
-                ref.current.click()
-              }
-            }}
-          />
-        </label>
-      </>
-    )
-  }, [onClickUpload])
 
   const ExpandButton = useCallback((): React.ReactElement => {
     return (
@@ -213,7 +177,6 @@ const ViewerButtons = ({
   return (
     <>
       <HorizontalContainer position="bottom">
-        <UploadButton />
         <PlayControlButton />
         <PlaySpeedButton speed={speed} onSelectSpeed={onSelectSpeed} />
         <Divider />
