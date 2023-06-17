@@ -26,6 +26,7 @@ const ContainerWrapper = styled.div<{ fold: boolean }>`
 `
 
 const ContainerStyled = styled.div`
+  position: relative;
   width: 100%;
   height: 100%;
   background-color: #ffffff;
@@ -33,7 +34,7 @@ const ContainerStyled = styled.div`
   border-radius: 0;
   outline: 0;
   margin: 0;
-  padding: 1em 2em;
+  padding: 0;
   box-sizing: border-box;
   box-shadow: 0 0 1em rgba(128, 128, 128, 0.5);
   overflow-y: auto;

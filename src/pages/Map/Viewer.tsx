@@ -14,8 +14,6 @@ import Aside from "../../components/Aside"
 import LocalTaxiIcon from "@mui/icons-material/LocalTaxi"
 import HailIcon from "@mui/icons-material/Hail"
 import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown"
-import { Divider, Stack, Typography } from "@mui/joy"
-import MuiTooltip from "@mui/joy/Tooltip"
 
 import { CustomOverlayMap, useMap } from "react-kakao-maps-sdk"
 
@@ -30,6 +28,7 @@ import styled from "styled-components"
 import Timeline from "./Timeline"
 import { useDynamicFetch } from "../../hooks"
 import { V_COLORS } from "./colors"
+import ChatSide from "./ChatSide"
 
 const MarkerType = {
   NONE: -1,
@@ -638,57 +637,6 @@ const Viewer = (): React.ReactElement => {
     [focusTo, vehiclesState]
   )
 
-  const StateViewer = useCallback((): React.ReactElement => {
-    if (!log) {
-      return (
-        <center
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: 0,
-            width: "100%",
-          }}
-        >
-          <Typography
-            color="neutral"
-            fontSize={2}
-            sx={{
-              translate: "0% -50%",
-              textAlign: "center",
-            }}
-          >
-            재생할 정보가 없습니다.
-          </Typography>
-        </center>
-      )
-    }
-    const { time, tasks } = log
-    const safeHumanizeDate = () => {
-      try {
-        return humanizeDate(new Date(time))
-      } catch (e) {
-        return ""
-      }
-    }
-    return (
-      <Stack spacing={1}>
-        <div key={`log-${time}`}>
-          <Divider
-            sx={{
-              marginTop: "0.5rem",
-              marginBottom: "0.25rem",
-            }}
-          >
-            <Typography color="neutral" fontSize={2}>
-              {safeHumanizeDate()}
-            </Typography>
-          </Divider>
-          <LogInfo time={time} vehicles={vehiclesState} tasks={tasks} />
-        </div>
-      </Stack>
-    )
-  }, [log, vehiclesState])
-
   const [isExpandTimeline, setExpanedTimeline] = useState<boolean>(false)
 
   return (
@@ -737,7 +685,7 @@ const Viewer = (): React.ReactElement => {
       </ViewerBottomFixedWrapperStyled>
 
       <Aside>
-        <StateViewer />
+        <ChatSide />
       </Aside>
     </>
   )
