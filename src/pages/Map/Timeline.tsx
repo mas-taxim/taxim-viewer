@@ -18,9 +18,9 @@ const START_MONTH = 8
 const START_DAY = 29
 const START_HOURS = 6
 const START_MINUTES = 0
-const TICKS_MS = 1000
-const STEP_JUMP_MINS = 30
-const COLUMN_GAP = (3600 * 1000) / 2 // 1 hour
+const TICKS_MS = 500
+const STEP_JUMP_MINS = 10
+const COLUMN_GAP = 10 * 60 * 1000 // 10 min
 
 type ServerScheduleTimeType = {
   load_time: string
@@ -219,26 +219,31 @@ const Timeline = () => {
   }, [snapshot])
 
   const timebar = useMemo(() => {
-    const { start, end } = range
+    const { start, current, end } = range
     const COLUMNS = (end.getTime() - start.getTime()) / COLUMN_GAP
     console.log("start", start)
     console.log("end", end)
 
     return [
       {
-        id: "hour",
-        title: "Hour",
+        id: "minutes",
+        title: current.toLocaleTimeString(),
         cells: [...Array(COLUMNS)].map((_, index) => {
           const time = timedelta(start, COLUMN_GAP * index)
           const end = timedelta(time, COLUMN_GAP)
-          const hour = time.getHours()
-          const half = time.getMinutes() > 0 ? " 반" : ""
+          const minute = time.getMinutes()
           return {
-            id: `id-${time.getTime()}`,
-            title: `${hour % 24}시${half}`,
+            id: `header-m-${time.getTime()}`,
+            title: "",
             start: time,
             end,
-          } as HeaderCellType
+            style:
+              minute == current.getMinutes()
+                ? {
+                    backgroundColor: "black",
+                  }
+                : {},
+          }
         }),
         useAsGrid: true,
         style: {},
@@ -258,6 +263,7 @@ const Timeline = () => {
           timebar={timebar}
           tracks={snapshot.logs.map(createTracksByVehicle)}
           now={range.current}
+          enableSticky
         />
       ) : (
         <EmptyMessageStyled>No Data</EmptyMessageStyled>

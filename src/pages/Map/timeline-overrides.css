@@ -15,8 +15,8 @@
   margin: 0;
   z-index: 1;
   width: 100%;
-  transform: translateX(-100%);
-  border-right-width: 11px;
+  transform: translateX(calc(-100% + 10px));
+  border-right-width: 10px;
   border-right-style: solid;
   border-right-color: rgba(255, 0, 127, 0.5);
   background-color: rgba(128, 128, 128, 0.2);
@@ -28,4 +28,23 @@
 
 .rt-track__element {
   z-index: 1;
+}
+
+.rt-track-key__entry {
+  line-height: 1;
+}
+
+.rt-track-key,
+.rt-track-key__entry,
+.rt-track__elements {
+  height: 40px;
+}
+
+.rt-track__element {
+  top: 6px;
+}
+
+.rt-element {
+  height: 26px;
+  line-height: 30px;
 }
