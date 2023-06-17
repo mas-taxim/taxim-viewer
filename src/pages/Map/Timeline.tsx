@@ -7,6 +7,7 @@ import React, {
 } from "react"
 // @ts-ignore
 import ExternalTimeline from "react-timelines"
+import styled from "styled-components"
 import "react-timelines/lib/css/style.css"
 import "./timeline-overrides.css"
 
@@ -88,6 +89,15 @@ type TimeRange = {
 const timedelta = (date: Date, delta: number): Date =>
   new Date(date.getTime() + delta)
 
+const EmptyMessageStyled = styled.div`
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: #9f9f9f;
+`
+
 const Timeline = () => {
   const [snapshot, setSnapshot] = useState<SnapshotType>()
   const [range, setRange] = useState<TimeRange>({
@@ -154,7 +164,8 @@ const Timeline = () => {
 
   useEffect(() => {
     console.log("snapshot", snapshot)
-    if (!snapshot) {
+    if (!snapshot || !snapshot.time) {
+      setTerminated(true)
       return
     }
     const now = new Date(snapshot.time)
@@ -207,7 +218,7 @@ const Timeline = () => {
           now={range.current}
         />
       ) : (
-        <>No Data</>
+        <EmptyMessageStyled>No Data</EmptyMessageStyled>
       ),
     [snapshot, timebar]
   )
