@@ -10,16 +10,10 @@ import ExternalTimeline from "react-timelines"
 import styled from "styled-components"
 import "react-timelines/lib/css/style.css"
 import "./timeline-overrides.css"
+import { useDynamicFetch } from "../../hooks"
 
 const SERVER_HOST = process.env.REACT_APP_SERVER_HOST as string
 const TIMEZONE_OFFSET = new Date().getTimezoneOffset() * 60 * 1000
-const START_YEAR = 2020
-const START_MONTH = 8
-const START_DAY = 29
-const START_HOURS = 6
-const START_MINUTES = 0
-const TICKS_MS = 500
-const STEP_JUMP_MINS = 10
 const COLUMN_GAP = 10 * 60 * 1000 // 10 min
 
 type ServerScheduleTimeType = {
@@ -38,13 +32,6 @@ type ServerSnapshotLogType = {
 type SnapshotType = {
   time: number
   logs: ServerSnapshotLogType[]
-}
-
-type HeaderCellType = {
-  id: string
-  title: string
-  start: Date
-  end: Date
 }
 
 const DEFAULT_TRACK_STYLE: CSSProperties = {
@@ -125,83 +112,47 @@ const EmptyMessageStyled = styled.div`
   color: #9f9f9f;
 `
 
-const Timeline = () => {
+type TimelineProps = {
+  year: number
+  month: number
+  day: number
+  hour: number
+  minute: number
+}
+
+const Timeline = ({ year, month, day, hour, minute }: TimelineProps) => {
   const [snapshot, setSnapshot] = useState<SnapshotType>()
   const [range, setRange] = useState<TimeRange>({
     start: new Date(),
     current: new Date(),
     end: new Date(),
   })
-  const [mins, setMinutes] = useState<number>(START_HOURS * 60 + START_MINUTES)
   const [terminated, setTerminated] = useState<boolean>(false)
 
   const stepable = (minutes: number): boolean => {
-    const startDate = new Date(START_YEAR, START_MONTH - 1, START_DAY)
+    const startDate = new Date(year, month - 1, day)
     const curDate = timedelta(startDate, minutes * 60 * 1000)
     return startDate.toLocaleDateString() == curDate.toLocaleDateString()
   }
 
-  // step minute after TICKS if possible
   useEffect(() => {
-    let timer: any = null
-    if (!terminated) {
-      timer = setTimeout(() => {
-        setMinutes((currentMin: number) => {
-          const nextMin = currentMin + STEP_JUMP_MINS
-          const available = stepable(nextMin)
-          if (!available) {
-            setTerminated(true)
-            return currentMin
-          } else {
-            return nextMin
-          }
-        })
-      }, TICKS_MS)
-    }
-    return () => {
-      if (timer) clearTimeout(timer)
-    }
-  }, [mins, terminated])
+    setTerminated(!stepable(minute))
+  }, [minute])
 
-  const fetchSnapshot = useCallback(
-    (
-      year: number,
-      month: number,
-      day: number,
-      hour: number,
-      minutes: number,
-      vehicles: number,
-      tasks: number
-    ) =>
-      fetch(
-        `${SERVER_HOST}/schedule/${year}/${month}/${day}/${hour}/${minutes}?vehicles=${vehicles}&tasks=${tasks}`
-      )
-        .then((r) => r.json())
-        .catch((e) => {
-          window.alert("Connection failed")
-          console.error(e)
-          setTerminated(true)
-        })
-        .then(setSnapshot),
-    [setTerminated, setSnapshot]
-  )
+  const [response, requestSchedule] = useDynamicFetch()
 
   useEffect(() => {
     if (terminated) return
-    const hour = Math.floor(mins / 60)
-    const minutes = mins % 60
-    const vehicles = 2
-    const tasks = 30
-    fetchSnapshot(
-      START_YEAR,
-      START_MONTH,
-      START_DAY,
-      hour,
-      minutes,
-      vehicles,
-      tasks
-    )
-  }, [mins, terminated, fetchSnapshot])
+    const vehicles = 10
+    const tasks = 130
+    const url = `${SERVER_HOST}/schedule/${year}/${month}/${day}/${hour}/${minute}?vehicles=${vehicles}&tasks=${tasks}`
+    requestSchedule(url)
+  }, [year, month, day, hour, minute, terminated])
+
+  useEffect(() => {
+    if (!response) return
+    setSnapshot(response.data as SnapshotType)
+  }, [response])
 
   useEffect(() => {
     console.log("snapshot", snapshot)

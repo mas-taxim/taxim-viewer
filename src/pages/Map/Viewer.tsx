@@ -787,7 +787,7 @@ const Viewer = (): React.ReactElement => {
           />
         </ViewerButtonsClearStyled>
         <TimelineWrapperStyled>
-          <Timeline />
+          <Timeline year={2020} month={8} day={29} hour={10} minute={30} />
         </TimelineWrapperStyled>
       </ViewerBottomFixedWrapperStyled>
 
