@@ -26,10 +26,10 @@ import {
 } from "../../providers/StatusProvider"
 import ViewerButtons from "./Controls/ViewerButtons"
 import { humanizeDate } from "../../helpers/stringFormat"
-import { randomDarkColor } from "../../helpers/colors"
 import styled from "styled-components"
 import Timeline from "./Timeline"
 import { useDynamicFetch } from "../../hooks"
+import { V_COLORS } from "./colors"
 
 const MarkerType = {
   NONE: -1,
@@ -45,10 +45,6 @@ type MarkerPosition = {
   lat: number
   lng: number
   type: number
-}
-
-interface ColorName {
-  [key: string]: string
 }
 
 type VehicleState = {
@@ -158,6 +154,9 @@ const Icon = ({ type, style = {} }: DisplayIconProps): any => {
   }
 }
 
+const TASK_PICK_COLOR = "#1d35ef66"
+const TASK_DROP_COLOR = "#4d75ef66"
+
 const LogInfoStyled = styled.div`
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -234,7 +233,6 @@ const Viewer = (): React.ReactElement => {
   const [progressMax, setProgressMax] = useState<number>(0)
   const [progress, setProgress] = useState<number>(0)
   const [elapsedMinutes, setElapsedMinutes] = useState<number>(0)
-  const [allColors, setColors] = useState<ColorName>({})
   const [log, setLog] = useState<LogFullType | null>()
   const [vehiclesState, setVehiclesState] = useState<Map<string, VehicleState>>(
     new Map()
@@ -276,68 +274,68 @@ const Viewer = (): React.ReactElement => {
     map.setLevel(level)
   }, [map, level])
 
-  const display = useCallback(
-    (t: Date) => {
-      if (!log) return
+  useEffect(() => {
+    if (!log) return
 
-      const { time, vehicles, tasks } = log
+    const { time, vehicles, tasks } = log
 
-      const vMarkers: Array<MarkerPosition> = Array.from(vehicles || []).map(
-        ({ name, lat, lng }: any) => ({
-          key: name,
-          color: allColors[name],
-          size: 5,
-          lat,
-          lng,
-          type: MarkerType.VEHICLE,
-        })
-      )
-
-      const tMarkers: Array<MarkerPosition> = Array.from(tasks || [])
-        .map(
-          ({
-            id,
-            pick_lat,
-            pick_lng,
-            drop_lat,
-            drop_lng,
-            status,
-          }: any): any[] => [
-            0 <= status && status <= 5
-              ? {
-                  key: `task-${id}-pick`,
-                  color: allColors[id],
-                  size: 4,
-                  lat: pick_lat,
-                  lng: pick_lng,
-                  type: MarkerType.PERSON_PICK,
-                }
-              : null,
-            {
-              key: `task-${id}-drop`,
-              color: allColors[id],
-              size: 4,
-              lat: drop_lat,
-              lng: drop_lng,
-              type: MarkerType.PERSON_DROP,
-            },
-          ]
-        )
-        .flat()
-        .filter((value) => value !== null)
-
-      setMarkerPositions([...vMarkers, ...tMarkers])
-      setVehiclesState((prev: Map<string, VehicleState>) => {
-        const newState = new Map(prev)
-        for (const vehicle of Array.from(vehicles || [])) {
-          const { name } = vehicle as VehicleState
-          newState.set(name, vehicle as VehicleState)
-        }
-        return newState
+    const vMarkers: Array<MarkerPosition> = Array.from(vehicles || []).map(
+      ({ name, lat, lng }: any) => ({
+        key: name,
+        color: V_COLORS.get(name) || "#cfcfcf",
+        size: 5,
+        lat,
+        lng,
+        type: MarkerType.VEHICLE,
       })
-    },
-    [log, allColors]
-  )
+    )
+
+    const tMarkers: Array<MarkerPosition> = Array.from(tasks || [])
+      .map(
+        ({
+          id,
+          pick_lat,
+          pick_lng,
+          drop_lat,
+          drop_lng,
+          status,
+        }: any): any[] => [
+          0 <= status && status <= 5
+            ? {
+                key: `task-${id}-pick`,
+                color: TASK_PICK_COLOR,
+                size: 4,
+                lat: pick_lat,
+                lng: pick_lng,
+                type: MarkerType.PERSON_PICK,
+              }
+            : null,
+          {
+            key: `task-${id}-drop`,
+            color: TASK_DROP_COLOR,
+            size: 4,
+            lat: drop_lat,
+            lng: drop_lng,
+            type: MarkerType.PERSON_DROP,
+          },
+        ]
+      )
+      .flat()
+      .filter((value) => value !== null)
+
+    console.log("markers[v]", vMarkers)
+    console.log("markers[t]", tMarkers)
+
+    setMarkerPositions([...vMarkers, ...tMarkers])
+    setVehiclesState((prev: Map<string, VehicleState>) => {
+      const newState = new Map(prev)
+      for (const vehicle of Array.from(vehicles || [])) {
+        const { name } = vehicle as VehicleState
+        newState.set(name, vehicle as VehicleState)
+      }
+      return newState
+    })
+  }, [log])
 
   useEffect(() => {
     if (!log) return
@@ -407,46 +405,13 @@ const Viewer = (): React.ReactElement => {
             lat: drop_lat,
             lng: drop_lng,
           },
-        ])
+    ])
       )
       .flat()
 
     setProgressMax(1000)
     fitMapBound(positions)
   }, [log, fitMapBound])
-
-  useEffect(() => {
-    if (!log) return
-
-    const { vehicles, tasks } = log
-
-    // collect and create pairs of name and color
-    const nameKeyValueMap: ColorName = [
-      ...Array.from(
-        new Set<string>(
-          vehicles
-            .map(({ name }: any) => `${name}`)
-            .concat(tasks.map(({ id }: any) => `${id}`))
-            .flat()
-        )
-      ),
-    ]
-      .map((name: string) => ({
-        [name]: randomDarkColor(),
-      }))
-      .reduce(
-        (
-          previousValue: { [x: string]: string },
-          currentValue: { [x: string]: string }
-        ) => ({
-          ...previousValue,
-          ...currentValue,
-        }),
-        {}
-      )
-
-    setColors(nameKeyValueMap)
-  }, [log])
 
   const focusTo = useCallback(
     ({ lat, lng }: any) => {
@@ -458,14 +423,13 @@ const Viewer = (): React.ReactElement => {
   type LogItemProps = {
     vehicle: VehicleState
     tasks: TaskType[]
-    colors: ColorName
   }
 
-  const LogItemVehicleWithTask = ({ vehicle, tasks, colors }: LogItemProps) => {
+  const LogItemVehicleWithTask = ({ vehicle, tasks }: LogItemProps) => {
     const { name: vehicle_id, lat, lng, allocated_id } = vehicle
 
     const vehicleTooltip = (
-      <VehicleIconTooltipStyled color={colors[vehicle_id]}>
+      <VehicleIconTooltipStyled color={V_COLORS.get(vehicle_id)}>
         {vehicle_id}
       </VehicleIconTooltipStyled>
     )
@@ -490,7 +454,7 @@ const Viewer = (): React.ReactElement => {
             <VehicleLogInfoStyled>
               <RoadLineStyled
                 style={{
-                  borderTop: `dashed 2px ${colors[vehicle_id]}`,
+                  borderTop: `dashed 2px ${V_COLORS.get(vehicle_id)}`,
                   height: "auto",
                   background: "transparent",
                   borderRadius: 0,
@@ -505,7 +469,7 @@ const Viewer = (): React.ReactElement => {
               >
                 <LogIcon
                   key={`logicon-${vehicle_id}`}
-                  color={colors[vehicle_id]}
+                  color={V_COLORS.get(vehicle_id)}
                   style={{
                     position: "absolute",
                     left: "50%",
@@ -513,7 +477,7 @@ const Viewer = (): React.ReactElement => {
                     zIndex: 1,
                     backgroundColor: "white",
                     borderWidth: "1px",
-                    borderColor: colors[vehicle_id],
+                    borderColor: V_COLORS.get(vehicle_id),
                     borderStyle: "dashed",
                   }}
                   tooltip={vehicleTooltip}
@@ -522,7 +486,7 @@ const Viewer = (): React.ReactElement => {
                     type={MarkerType.VEHICLE}
                     style={{
                       margin: "0 auto",
-                      fill: colors[vehicle_id],
+                      fill: V_COLORS.get(vehicle_id),
                     }}
                   />
                 </LogIcon>
@@ -556,7 +520,7 @@ const Viewer = (): React.ReactElement => {
     const IconReadyStyle = {
       backgroundColor: "transparent",
       borderWidth: "1px",
-      borderColor: colors[vehicle_id],
+      borderColor: V_COLORS.get(vehicle_id),
       borderStyle: "dashed",
     }
 
@@ -567,13 +531,13 @@ const Viewer = (): React.ReactElement => {
     }
 
     const IconReadyInnerStyle = {
-      fill: colors[vehicle_id],
+      fill: V_COLORS.get(vehicle_id),
     }
 
     return (
       <LogInfoStyled className="pairs" key={`log-info-${vehicle_id}`}>
         <LogIcon
-          color={status <= 5 ? "transparent" : colors[vehicle_id]}
+          color={status <= 5 ? "transparent" : V_COLORS.get(vehicle_id)}
           style={{
             justifySelf: "flex-start",
             cursor: "pointer",
@@ -596,7 +560,9 @@ const Viewer = (): React.ReactElement => {
         </LogIcon>
         <VehicleLogInfoStyled>
           <RoadLineStyled
-            style={isPicked ? { backgroundColor: colors[vehicle_id] } : {}}
+            style={
+              isPicked ? { backgroundColor: V_COLORS.get(vehicle_id) } : {}
+            }
           />
           <div
             style={{
@@ -607,7 +573,7 @@ const Viewer = (): React.ReactElement => {
           >
             <LogIcon
               key={`logicon-${vehicle_id}`}
-              color={colors[vehicle_id]}
+              color={V_COLORS.get(vehicle_id)}
               style={{
                 position: "absolute",
                 left: `${get_slope_weight(
@@ -640,7 +606,7 @@ const Viewer = (): React.ReactElement => {
           </div>
         </VehicleLogInfoStyled>
         <LogIcon
-          color={colors[vehicle_id]}
+          color={V_COLORS.get(vehicle_id)}
           style={{
             justifySelf: "flex-end",
             cursor: "pointer",
@@ -666,7 +632,7 @@ const Viewer = (): React.ReactElement => {
   }
 
   const LogInfo = useCallback(
-    ({ time, vehicles, tasks, colors }: any) => {
+    ({ time, vehicles, tasks }: any) => {
       return (
         <>
           {Array.from(vehicles.values())
@@ -680,7 +646,6 @@ const Viewer = (): React.ReactElement => {
                 <LogItemVehicleWithTask
                   vehicle={thisVehicle}
                   tasks={thisTasks as TaskType[]}
-                  colors={colors}
                 />
               )
             })}
@@ -715,6 +680,13 @@ const Viewer = (): React.ReactElement => {
       )
     }
     const { time, tasks } = log
+    const safeHumanizeDate = () => {
+      try {
+        return humanizeDate(new Date(time))
+      } catch (e) {
+        return ""
+      }
+    }
     return (
       <Stack spacing={1}>
         <div key={`log-${time}`}>
@@ -725,21 +697,16 @@ const Viewer = (): React.ReactElement => {
             }}
           >
             <Typography color="neutral" fontSize={2}>
-              {humanizeDate(new Date(time))}
+              {safeHumanizeDate()}
             </Typography>
           </Divider>
-          <LogInfo
-            time={time}
-            vehicles={vehiclesState}
-            tasks={tasks}
-            colors={allColors}
-          />
+          <LogInfo time={time} vehicles={vehiclesState} tasks={tasks} />
         </div>
       </Stack>
     )
-  }, [log, allColors, vehiclesState])
+  }, [log, vehiclesState])
 
-  const [isExpandTimeline, setExpanedTimeline] = useState<boolean>(true)
+  const [isExpandTimeline, setExpanedTimeline] = useState<boolean>(false)
 
   return (
     <>
@@ -772,6 +739,7 @@ const Viewer = (): React.ReactElement => {
             progressMax={progressMax}
             progressCurrent={progress}
             speed={speed}
+            expanded={isExpandTimeline}
             onSelectSpeed={setSpeed}
             onProgressUpdated={(i: number) =>
               setProgress(elapsedMinutes * JUMP_MINS)
