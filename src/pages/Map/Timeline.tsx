@@ -113,14 +113,10 @@ const EmptyMessageStyled = styled.div`
 `
 
 type TimelineProps = {
-  year: number
-  month: number
-  day: number
-  hour: number
-  minute: number
+  time: Date
 }
 
-const Timeline = ({ year, month, day, hour, minute }: TimelineProps) => {
+const Timeline = ({ time }: TimelineProps) => {
   const [snapshot, setSnapshot] = useState<SnapshotType>()
   const [range, setRange] = useState<TimeRange>({
     start: new Date(),
@@ -128,12 +124,29 @@ const Timeline = ({ year, month, day, hour, minute }: TimelineProps) => {
     end: new Date(),
   })
   const [terminated, setTerminated] = useState<boolean>(false)
+  const [year, setYear] = useState<number>(time.getFullYear())
+  const [month, setMonth] = useState<number>(time.getMonth() + 1)
+  const [day, setDay] = useState<number>(time.getDay())
+  const [hour, setHour] = useState<number>(time.getHours())
+  const [minute, setMinute] = useState<number>(time.getMinutes())
 
-  const stepable = (minutes: number): boolean => {
-    const startDate = new Date(year, month - 1, day)
-    const curDate = timedelta(startDate, minutes * 60 * 1000)
-    return startDate.toLocaleDateString() == curDate.toLocaleDateString()
-  }
+  const stepable = useCallback(
+    (minutes: number): boolean => {
+      const startDate = new Date(year, month - 1, day)
+      const curDate = timedelta(startDate, minutes * 60 * 1000)
+      return startDate.toLocaleDateString() == curDate.toLocaleDateString()
+    },
+    [year, month, day]
+  )
+
+  useEffect(() => {
+    console.log("Timeline time changed", time)
+    setYear(time.getFullYear())
+    setMonth(time.getMonth() + 1)
+    setDay(time.getDate())
+    setHour(time.getHours())
+    setMinute(time.getMinutes())
+  }, [time])
 
   useEffect(() => {
     setTerminated(!stepable(minute))
@@ -143,6 +156,7 @@ const Timeline = ({ year, month, day, hour, minute }: TimelineProps) => {
 
   useEffect(() => {
     if (terminated) return
+    console.log("Request schedule")
     const vehicles = 10
     const tasks = 130
     const url = `${SERVER_HOST}/schedule/${year}/${month}/${day}/${hour}/${minute}?vehicles=${vehicles}&tasks=${tasks}`

@@ -5,14 +5,34 @@ export interface ContextState<T> {
   setState: React.Dispatch<React.SetStateAction<T>>
 }
 
+export type LogFullType = {
+  time: number
+  vehicles: Array<{
+    name: string
+    lat: number
+    lng: number
+    status: number
+    allocated_id: number
+  }>
+  tasks: Array<{
+    id: number
+    pick_lat: number
+    pick_lng: number
+    drop_lat: number
+    drop_lng: number
+    time: number
+    status: number
+  }>
+}
+
 export interface StatusState {
   currentTime: number | null
-  logs: Array<any>
+  log: LogFullType | null
 }
 
 const initialState: StatusState = {
   currentTime: null,
-  logs: [],
+  log: null,
 }
 
 const Context: any = createContext<ContextState<StatusState> | undefined>(
