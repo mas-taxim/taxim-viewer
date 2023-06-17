@@ -17,6 +17,7 @@
     "@types/node": "^16.18.14",
     "@types/react": "^18.0.8",
     "@types/react-dom": "^18.0.11",
+    "axios": "^1.4.0",
     "react": "^18.0.8",
     "react-dom": "^18.0.11",
     "react-kakao-maps-sdk": "^1.1.6",
