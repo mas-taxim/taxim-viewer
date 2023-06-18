@@ -700,10 +700,23 @@ const Viewer = (): React.ReactElement => {
           onTextChange={(text: string) => setChatInput(text)}
           onTextSend={() => {
             console.log(chatInput)
+            // append user message
             addChatMessage({
               text: chatInput,
               from: "user",
             } as ChatMessageType)
+            // request and append bot response
+            axios.post(`${SERVER_HOST}/chat`, chatInput).then((response) => {
+              const res = response.data
+              if (!res) return
+              const { text, action, data } = res
+              addChatMessage({
+                text,
+                from: "bot",
+                action,
+                data,
+              } as ChatMessageType)
+            })
             setChatInput("")
           }}
         />
