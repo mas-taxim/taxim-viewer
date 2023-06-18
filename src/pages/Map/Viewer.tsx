@@ -650,6 +650,9 @@ const Viewer = (): React.ReactElement => {
       action: "nothing",
     } as ChatMessageType,
   ])
+  const addChatMessage = (message: ChatMessageType) => {
+    setChatMessages((prev) => prev.concat(message))
+  }
 
   return (
     <>
@@ -703,6 +706,10 @@ const Viewer = (): React.ReactElement => {
           onTextChange={(text: string) => setChatInput(text)}
           onTextSend={() => {
             console.log(chatInput)
+            addChatMessage({
+              text: chatInput,
+              from: "user",
+            } as ChatMessageType)
             setChatInput("")
           }}
         />
