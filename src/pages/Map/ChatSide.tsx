@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef } from "react"
 import styled, { css } from "styled-components"
 import { Stack } from "@mui/joy"
 import Avatar from "@mui/joy/Avatar"
+import Button from "@mui/joy/Button"
 import IconButton from "@mui/joy/IconButton"
 import SendRoundedIcon from "@mui/icons-material/SendRounded"
 
@@ -161,6 +162,27 @@ const ChatSide = ({ messages }: ChatSideProps): React.ReactElement => {
     scrollToBottom()
   }, [messages])
 
+  const Action: React.FC<{ message: ChatMessageType }> = ({
+    message,
+  }): React.ReactElement => {
+    const { action, data } = message
+    if (action === "focus" && data) {
+      return (
+        <Button
+          variant="outlined"
+          size="sm"
+          sx={{ marginTop: "6px" }}
+          onClick={() => {
+            alert(data)
+          }}
+        >
+          지도에서 확인하기
+        </Button>
+      )
+    }
+    return <></>
+  }
+
   return (
     <ChatContainerStyled ref={messagesEndRef}>
       <Stack
@@ -174,16 +196,20 @@ const ChatSide = ({ messages }: ChatSideProps): React.ReactElement => {
           paddingTop: "1em",
         }}
       >
-        {messages.map(
-          ({ text, from, action, data }: ChatMessageType, index: number) => (
+        {messages.map((message: ChatMessageType, index: number) => {
+          const { text, from, action, data } = message
+          return (
             <ChatMessage
               key={`chat_message_${index}`}
               direction={from === "bot" ? "left" : "right"}
             >
-              {text}
+              <>
+                {text}
+                <Action message={message} />
+              </>
             </ChatMessage>
           )
-        )}
+        })}
       </Stack>
     </ChatContainerStyled>
   )
