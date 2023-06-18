@@ -10,7 +10,7 @@ import ExternalTimeline from "react-timelines"
 import styled from "styled-components"
 import "react-timelines/lib/css/style.css"
 import "./timeline-overrides.css"
-import { useDynamicFetch } from "../../hooks"
+import axios from "axios"
 
 const SERVER_HOST = process.env.REACT_APP_SERVER_HOST as string
 const TIMEZONE_OFFSET = new Date().getTimezoneOffset() * 60 * 1000
@@ -152,21 +152,16 @@ const Timeline = ({ time }: TimelineProps) => {
     setTerminated(!stepable(minute))
   }, [minute])
 
-  const [response, requestSchedule] = useDynamicFetch()
-
   useEffect(() => {
     if (terminated) return
     console.log("Request schedule")
     const vehicles = 10
     const tasks = 130
     const url = `${SERVER_HOST}/schedule/${year}/${month}/${day}/${hour}/${minute}?vehicles=${vehicles}&tasks=${tasks}`
-    requestSchedule(url)
+    axios.get(url).then((response) => {
+      setSnapshot(response.data as SnapshotType)
+    })
   }, [year, month, day, hour, minute, terminated])
-
-  useEffect(() => {
-    if (!response) return
-    setSnapshot(response.data as SnapshotType)
-  }, [response])
 
   useEffect(() => {
     console.log("snapshot", snapshot)

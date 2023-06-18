@@ -7,6 +7,7 @@ import React, {
   useRef,
   CSSProperties,
 } from "react"
+import axios from "axios"
 
 import Dot from "../../components/Dot"
 import Aside from "../../components/Aside"
@@ -23,10 +24,8 @@ import {
   LogFullType,
 } from "../../providers/StatusProvider"
 import ViewerButtons from "./Controls/ViewerButtons"
-import { humanizeDate } from "../../helpers/stringFormat"
 import styled from "styled-components"
 import Timeline from "./Timeline"
-import { useDynamicFetch } from "../../hooks"
 import { V_COLORS } from "./colors"
 import ChatSide, {
   ChatInputContainer,
@@ -240,7 +239,6 @@ const Viewer = (): React.ReactElement => {
   const [vehiclesState, setVehiclesState] = useState<Map<string, VehicleState>>(
     new Map()
   )
-  const [responseLog, requestLog] = useDynamicFetch()
   const [displayTime, setDisplayTime] = useState<Date>(INITIAL_DATE)
 
   useEffect(() => {
@@ -252,14 +250,10 @@ const Viewer = (): React.ReactElement => {
     setDisplayTime(timeShifted)
     const { year, month, day, hour, minute } = parseDate(timeShifted)
     const url = `${SERVER_HOST}/log/${year}/${month}/${day}/${hour}/${minute}?vehicles=${VEHICLES}&tasks=${TASKS}`
-    requestLog(url)
+    axios.get(url).then((response) => {
+      setLog(response.data as LogFullType)
+    })
   }, [elapsedMinutes])
-
-  useEffect(() => {
-    const { data, loading, error } = responseLog
-    console.log("log fetched", data)
-    setLog(data as LogFullType)
-  }, [responseLog.data])
 
   useEffect(() => {
     const { log: logFull } = status as StatusState
