@@ -28,7 +28,11 @@ import styled from "styled-components"
 import Timeline from "./Timeline"
 import { useDynamicFetch } from "../../hooks"
 import { V_COLORS } from "./colors"
-import ChatSide from "./ChatSide"
+import ChatSide, {
+  ChatInputContainer,
+  ChatMessageType,
+  getRandomWelcomeMessage,
+} from "./ChatSide"
 
 const MarkerType = {
   NONE: -1,
@@ -638,6 +642,14 @@ const Viewer = (): React.ReactElement => {
   )
 
   const [isExpandTimeline, setExpanedTimeline] = useState<boolean>(false)
+  const [chatInput, setChatInput] = useState<string>("")
+  const [chatMessages, setChatMessages] = useState<Array<ChatMessageType>>([
+    {
+      text: getRandomWelcomeMessage(),
+      from: "bot",
+      action: "nothing",
+    } as ChatMessageType,
+  ])
 
   return (
     <>
@@ -685,7 +697,15 @@ const Viewer = (): React.ReactElement => {
       </ViewerBottomFixedWrapperStyled>
 
       <Aside>
-        <ChatSide />
+        <ChatSide messages={chatMessages} />
+        <ChatInputContainer
+          controlledText={chatInput}
+          onTextChange={(text: string) => setChatInput(text)}
+          onTextSend={() => {
+            console.log(chatInput)
+            setChatInput("")
+          }}
+        />
       </Aside>
     </>
   )

@@ -1,11 +1,51 @@
-import React from "react"
+import React, { PropsWithChildren, useCallback } from "react"
 import styled, { css } from "styled-components"
 import { Stack } from "@mui/joy"
 import Avatar from "@mui/joy/Avatar"
+import IconButton from "@mui/joy/IconButton"
+import SendRoundedIcon from "@mui/icons-material/SendRounded"
+
+const WELCOME_MESSAGES = [
+  "안녕하세요, 무엇을 도와드릴까요?",
+  "무엇을 도와드릴까요?",
+  "어떤 질문이 있으신가요?",
+  "어떤 주제에 대해 이야기해 보고 싶으신가요?",
+  "도와드릴 일이 있으시면 말씀해 주세요.",
+]
+
+export const getRandomWelcomeMessage = (): string =>
+  WELCOME_MESSAGES[Math.floor(Math.random() * WELCOME_MESSAGES.length)]
 
 const ChatContainerStyled = styled.div`
-  height: calc(100% - 4em);
-  padding: 2em;
+  padding: 1em 2em;
+  background-color: white;
+  height: calc(100% - 60px);
+  box-sizing: border-box;
+`
+
+const ChatTextFieldContainerStyled = styled.div`
+  display: grid;
+  grid-gap: 0;
+  height: 50px;
+  margin-top: 10px;
+  border-top: 1px solid #efefef;
+  box-shadow: 0 0 5px rgba(128, 128, 128, 0.1);
+  grid-template-columns: 1fr 50px;
+`
+
+const ChatTextFieldStyled = styled.input`
+  height: 100%;
+  position: relative;
+  width: 100%;
+  border: none;
+  outline: none;
+  padding: 0;
+  box-sizing: border-box;
+  vertical-align: top;
+  margin: 0;
+  width: 100%;
+  padding: 1em;
+  color: #1f1f1f;
 `
 
 const ChatMessageStyled = styled.div<{
@@ -17,13 +57,13 @@ const ChatMessageStyled = styled.div<{
   color: ${({ color }) => color || "#3f3f3f"};
   background-color: ${({ backgroundColor }) => backgroundColor || "#eaecef"};
   font-size: 0.85em;
-  line-height: 0.9em;
+  line-height: 1.375em;
   width: fit-content;
   min-width: 120px;
   max-width: 90%;
   padding-top: 1em;
   padding-bottom: 1em;
-  padding-left: ${({ direction }) => (direction === "left" ? "2em" : "1em")}};
+  padding-left: ${({ direction }) => (direction === "left" ? "1.5em" : "1em")}};
   padding-right: 1em;
   text-align: ${({ direction }) => (direction === "left" ? "left" : "right")}};
   box-sizing: border-box;
@@ -87,7 +127,18 @@ const ChatMessage = ({ children, direction }: ChatMessageProp) => {
   )
 }
 
-const ChatSide = (): React.ReactElement => {
+export type ChatMessageType = {
+  text: string
+  from: "bot" | "user"
+  action: "focus" | "nothing" | null
+  data: any
+}
+
+type ChatSideProps = {
+  messages: ChatMessageType[]
+}
+
+const ChatSide = ({ messages }: ChatSideProps): React.ReactElement => {
   return (
     <ChatContainerStyled>
       <Stack
@@ -97,22 +148,56 @@ const ChatSide = (): React.ReactElement => {
         spacing={2}
         sx={{ height: "100%" }}
       >
-        <ChatMessage direction="left">
-          안녕하세요, 무엇을 도와드릴까요?
-        </ChatMessage>
-        <ChatMessage direction="right">오늘은 무슨 요일인가요?</ChatMessage>
-        <ChatMessage direction="left">오늘은 금요일입니다.</ChatMessage>
-        <ChatMessage direction="right">오늘은 뭐하고 계세요?</ChatMessage>
-        <ChatMessage direction="left">
-          지금은 사용자님과 대화하고 있습니다.
-        </ChatMessage>
-        <ChatMessage direction="right">한국어를 잘하시네요.</ChatMessage>
-        <ChatMessage direction="left">
-          네, 한국어를 열심히 공부하고 있습니다.
-        </ChatMessage>
-        <ChatMessage direction="right">한국에 가본 적 있나요?</ChatMessage>
+        {messages.map(({ text, from, action, data }: ChatMessageType) => (
+          <ChatMessage direction={from === "bot" ? "left" : "right"}>
+            {text}
+          </ChatMessage>
+        ))}
       </Stack>
     </ChatContainerStyled>
+  )
+}
+
+type ChatInputContainerProps = {
+  controlledText: string | null
+  onTextChange: (text: string) => void
+  onTextSend: (text: string) => void
+}
+
+export const ChatInputContainer = ({
+  controlledText = "",
+  onTextChange,
+  onTextSend,
+}: ChatInputContainerProps): React.ReactElement => {
+  const send = useCallback(() => {
+    onTextSend(controlledText as string)
+  }, [controlledText, onTextSend])
+  return (
+    <>
+      <ChatTextFieldContainerStyled>
+        <ChatTextFieldStyled
+          type="text"
+          placeholder="여기에 입력하세요..."
+          value={controlledText as string}
+          onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
+            if (event.code === "Enter") send()
+          }}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            onTextChange(event.target.value as string)
+          }}
+        />
+        <IconButton
+          size="sm"
+          variant="plain"
+          sx={{
+            borderRadius: 0,
+          }}
+          onClick={() => send()}
+        >
+          <SendRoundedIcon fontSize="small" />
+        </IconButton>
+      </ChatTextFieldContainerStyled>
+    </>
   )
 }
 
