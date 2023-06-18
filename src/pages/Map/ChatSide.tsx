@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useCallback } from "react"
+import React, { useCallback, useEffect, useRef } from "react"
 import styled, { css } from "styled-components"
 import { Stack } from "@mui/joy"
 import Avatar from "@mui/joy/Avatar"
@@ -21,6 +21,7 @@ const ChatContainerStyled = styled.div`
   background-color: white;
   height: calc(100% - 60px);
   box-sizing: border-box;
+  overflow-y: auto;
 
   .chat_message:has([direction="right"])
     + .chat_message:has([direction="right"]),
@@ -147,20 +148,42 @@ type ChatSideProps = {
 }
 
 const ChatSide = ({ messages }: ChatSideProps): React.ReactElement => {
+  const messagesEndRef = useRef<any>(null)
+
+  const scrollToBottom = () => {
+    const { current } = messagesEndRef
+    if (current !== null) {
+      current.scrollTo(0, current.scrollHeight)
+    }
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
   return (
-    <ChatContainerStyled>
+    <ChatContainerStyled ref={messagesEndRef}>
       <Stack
         direction="column"
         justifyContent="flex-end"
         alignItems="stretch"
         spacing={2}
-        sx={{ height: "100%" }}
+        sx={{
+          height: "max-content",
+          minHeight: "100%",
+          paddingTop: "1em",
+        }}
       >
-        {messages.map(({ text, from, action, data }: ChatMessageType) => (
-          <ChatMessage direction={from === "bot" ? "left" : "right"}>
-            {text}
-          </ChatMessage>
-        ))}
+        {messages.map(
+          ({ text, from, action, data }: ChatMessageType, index: number) => (
+            <ChatMessage
+              key={`chat_message_${index}`}
+              direction={from === "bot" ? "left" : "right"}
+            >
+              {text}
+            </ChatMessage>
+          )
+        )}
       </Stack>
     </ChatContainerStyled>
   )
@@ -181,6 +204,7 @@ export const ChatInputContainer = ({
     const text = controlledText || ""
     if (text.length > 0) onTextSend(text)
   }, [controlledText, onTextSend])
+
   return (
     <>
       <ChatTextFieldContainerStyled>
