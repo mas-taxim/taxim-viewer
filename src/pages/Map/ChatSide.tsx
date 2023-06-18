@@ -21,6 +21,13 @@ const ChatContainerStyled = styled.div`
   background-color: white;
   height: calc(100% - 60px);
   box-sizing: border-box;
+
+  .chat_message:has([direction="right"])
+    + .chat_message:has([direction="right"]),
+  .chat_message:has([direction="left"])
+    + .chat_message:has([direction="left"]) {
+    margin-top: 5px;
+  }
 `
 
 const ChatTextFieldContainerStyled = styled.div`
@@ -59,15 +66,16 @@ const ChatMessageStyled = styled.div<{
   font-size: 0.85em;
   line-height: 1.375em;
   width: fit-content;
-  min-width: 120px;
+  min-width: 20px;
   max-width: 90%;
-  padding-top: 1em;
-  padding-bottom: 1em;
-  padding-left: ${({ direction }) => (direction === "left" ? "1.5em" : "1em")}};
-  padding-right: 1em;
-  text-align: ${({ direction }) => (direction === "left" ? "left" : "right")}};
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: ${({ direction }) =>
+    direction === "left" ? "calc(18px + 0.25em)" : "18px"}};
+  padding-right: 18px;
+  text-align: start;
   box-sizing: border-box;
-  border-radius: 14px;
+  border-radius: 25px;
   border-color: #ccc;
   border-style: none;
   outline: none;
@@ -102,7 +110,7 @@ const ChatMessage = ({ children, direction }: ChatMessageProp) => {
         }
   const isBot = direction === "left"
   return (
-    <Stack {...stackStyle}>
+    <Stack {...stackStyle} className="chat_message">
       <ChatMessageStyled
         direction={direction}
         color={isBot ? "#2f2f2f" : "#efefef"}
@@ -170,7 +178,8 @@ export const ChatInputContainer = ({
   onTextSend,
 }: ChatInputContainerProps): React.ReactElement => {
   const send = useCallback(() => {
-    onTextSend(controlledText as string)
+    const text = controlledText || ""
+    if (text.length > 0) onTextSend(text)
   }, [controlledText, onTextSend])
   return (
     <>
@@ -179,7 +188,7 @@ export const ChatInputContainer = ({
           type="text"
           placeholder="여기에 입력하세요..."
           value={controlledText as string}
-          onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
+          onKeyUp={(event: React.KeyboardEvent<HTMLInputElement>) => {
             if (event.code === "Enter") send()
           }}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
