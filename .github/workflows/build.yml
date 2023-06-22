@@ -9,6 +9,8 @@ on:
     inputs:
       tags:
         description: 'build'
+permissions:
+  contents: write
 
 jobs:
   build:
