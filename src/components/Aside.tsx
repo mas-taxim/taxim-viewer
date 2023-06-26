@@ -38,6 +38,9 @@ const ContainerStyled = styled.div`
   box-sizing: border-box;
   box-shadow: 0 0 1em rgba(128, 128, 128, 0.5);
   overflow-y: auto;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `
 
 const FoldButtonContainerStyled = styled.div`

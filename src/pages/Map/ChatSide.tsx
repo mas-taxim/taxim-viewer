@@ -20,9 +20,17 @@ export const getRandomWelcomeMessage = (): string =>
 const ChatContainerStyled = styled.div`
   padding: 1em 2em;
   background-color: white;
-  height: calc(100% - 60px);
+  height: calc(100% - 50px);
   box-sizing: border-box;
   overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    border-radius: 5px;
+    background: #d1d1d1;
+  }
 
   .chat_message:has([direction="right"])
     + .chat_message:has([direction="right"]),
@@ -36,7 +44,7 @@ const ChatTextFieldContainerStyled = styled.div`
   display: grid;
   grid-gap: 0;
   height: 50px;
-  margin-top: 10px;
+  margin: 0;
   border-top: 1px solid #efefef;
   box-shadow: 0 0 5px rgba(128, 128, 128, 0.1);
   grid-template-columns: 1fr 50px;
@@ -194,6 +202,8 @@ const ChatSide = ({ messages }: ChatSideProps): React.ReactElement => {
           height: "max-content",
           minHeight: "100%",
           paddingTop: "1em",
+          paddingBottom: "1em",
+          boxSizing: "border-box",
         }}
       >
         {messages.map((message: ChatMessageType, index: number) => {
