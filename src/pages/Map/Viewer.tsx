@@ -241,6 +241,16 @@ const Viewer = (): React.ReactElement => {
   )
   const [displayTime, setDisplayTime] = useState<Date>(INITIAL_DATE)
 
+  // auto play when starts
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setRunning(true)
+    }, 1000)
+    return () => {
+      clearTimeout(t)
+    }
+  }, [])
+
   useEffect(() => {
     const timeShifted = new Date(
       INITIAL_DATE.getTime() + elapsedMinutes * 60 * 1000
@@ -635,7 +645,7 @@ const Viewer = (): React.ReactElement => {
     [focusTo, vehiclesState]
   )
 
-  const [isExpandTimeline, setExpanedTimeline] = useState<boolean>(false)
+  const [isExpandTimeline, setExpanedTimeline] = useState<boolean>(true)
   const [chatInput, setChatInput] = useState<string>("")
   const [chatMessages, setChatMessages] = useState<Array<ChatMessageType>>([
     {
